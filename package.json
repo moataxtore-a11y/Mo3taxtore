@@ -1,0 +1,23 @@
+{
+  "name": "moataxtore",
+  "version": "1.0.0",
+  "description": "Educational Bookstore Platform",
+  "main": "index.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "server": "npm run dev --prefix backend",
+    "client": "npm run dev --prefix frontend",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend"
+  },
+  "dependencies": {
+    "compression": "^1.8.1",
+    "concurrently": "^8.2.2",
+    "express-mongo-sanitize": "^2.2.0",
+    "mongodb": "^7.1.1",
+    "xss-clean": "^0.1.4"
+  },
+  "devDependencies": {
+    "cypress": "^15.13.0"
+  }
+}

@@ -1,0 +1,321 @@
+@import "tailwindcss";
+
+/* Custom Theme - Bright, Fun, No Blue */
+
+@theme {
+    --color-primary: #31605F;
+    --color-primary-dark: #193534;
+    --color-primary-light: #244948;
+    --color-secondary: #5F7A79;
+    --color-secondary-dark: #193534;
+    --color-accent: #E3ECEB;
+    --color-accent-dark: #D6E4E3;
+    --color-warning: #8FA7A6;
+    --color-success: #31605F;
+    --color-danger: #244948;
+    --color-bg: #EEF4F3;
+    --color-card: rgba(255, 255, 255, 0.78);
+    --color-text-primary: #1E2F2E;
+    --color-text-secondary: #5F7A79;
+    --color-text-muted: #8FA7A6;
+    --color-border: #DCE6E5;
+    --font-heading: 'Cairo', sans-serif;
+    --font-body: 'Tajawal', sans-serif;
+}
+
+
+/* Base styles */
+
+@layer base {
+    * {
+        box-sizing: border-box;
+    }
+
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    body {
+        font-family: var(--font-body);
+        background-color: var(--color-bg);
+        color: var(--color-text-primary);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    .bg-card {
+        background: var(--color-card) !important;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+    }
+
+    .bg-bg {
+        background: rgba(238, 244, 243, 0.72) !important;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-heading);
+        font-weight: 700;
+    }
+
+    ::selection {
+        background-color: var(--color-primary);
+        color: white;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--color-bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--color-primary-light);
+        border-radius: 50px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary);
+    }
+
+    select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2331605F' stroke-width='4'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: left 1.5rem center;
+        background-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    [dir="rtl"] select {
+        background-position: left 1.5rem center;
+        padding-left: 3.5rem !important;
+    }
+
+    select:focus {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2331605F' stroke-width='4'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M4.5 15.75l7.5-7.5 7.5 7.5' /%3E%3C/svg%3E");
+    }
+}
+
+
+/* Animation keyframes */
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes pulse-soft {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+@keyframes slide-up {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes wiggle {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(-3deg);
+    }
+
+    75% {
+        transform: rotate(3deg);
+    }
+}
+
+@keyframes bounce-in {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    70% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes cart-add {
+    0% {
+        transform: scale(1);
+    }
+
+    25% {
+        transform: scale(1.2) rotate(-5deg);
+    }
+
+    50% {
+        transform: scale(0.9) rotate(5deg);
+    }
+
+    75% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes confetti {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-100px) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+
+/* Utility classes */
+
+@utility animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+@utility animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+}
+
+@utility animate-slide-up {
+    animation: slide-up 0.5s ease-out forwards;
+}
+
+@utility animate-wiggle {
+    animation: wiggle 0.5s ease-in-out;
+}
+
+@utility animate-bounce-in {
+    animation: bounce-in 0.6s ease-out;
+}
+
+@utility animate-cart-add {
+    animation: cart-add 0.5s ease-in-out;
+}
+
+@utility animate-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@utility glass {
+    background: rgba(255, 255, 255, 0.85);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+@utility gradient-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+}
+
+@utility gradient-secondary {
+    background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-dark));
+}
+
+@utility gradient-accent {
+    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+}
+
+@utility text-gradient {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    padding-bottom: 0.2em;
+    margin-bottom: -0.2em;
+    line-height: 1.4;
+}
+
+@utility no-scrollbar {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+
+/* Slick carousel overrides */
+
+.slick-dots li button:before {
+    color: var(--color-primary) !important;
+}
+
+.slick-prev:before,
+.slick-next:before {
+    color: var(--color-primary) !important;
+    font-size: 24px !important;
+}
+
+@utility custom-sidebar-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}

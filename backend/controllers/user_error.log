@@ -1,0 +1,7 @@
+TypeError: next is not a function
+    at model.<anonymous> (E:\Projects\Moataxtore\backend\models\User.js:84:5)
+    at async Kareem.execPre (E:\Projects\Moataxtore\backend\node_modules\kareem\index.js:70:24)
+    at async model.$__save (E:\Projects\Moataxtore\backend\node_modules\mongoose\lib\model.js:393:5)
+    at async model.save (E:\Projects\Moataxtore\backend\node_modules\mongoose\lib\model.js:663:5)
+    at async model.create (E:\Projects\Moataxtore\backend\node_modules\mongoose\lib\model.js:2750:5)
+    at async exports.createUser (E:\Projects\Moataxtore\backend\controllers\adminController.js:39:22)
