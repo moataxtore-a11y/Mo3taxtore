@@ -153,7 +153,7 @@ const Navbar = () => {
           </div>
 
           {/* Center (Desktop/Mobile) - Logo */}
-          <div className="absolute left-1/2 -translate-x-1/2 pointer-events-auto z-10">
+          <div style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', zIndex: 10 }}>
             <Link 
               to="/" 
               onClick={(e) => {
@@ -163,6 +163,7 @@ const Navbar = () => {
                 }
               }}
               className="group flex items-center"
+              style={{ pointerEvents: 'auto' }}
             >
               <img
                 src={logo}

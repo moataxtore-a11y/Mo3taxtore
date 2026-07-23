@@ -1,49 +1,22 @@
-const mongoose = require('mongoose');
+const { createClient } = require('@supabase/supabase-js');
 
-const maskMongoUri = (uri) => {
-    if (!uri) return uri;
-    return uri.replace(/\/\/(.*?):(.*?)@/, '//***:***@');
-};
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'placeholder-key';
 
-const getMongoConnectOptions = () => ({
-    family: 4, // Force IPv4 to prevent IPv6 DNS issues
-    serverSelectionTimeoutMS: 5000,
+const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+    },
 });
 
-const connectDB = async() => {
+const connectDB = async () => {
     try {
-        const uri = process.env.MONGODB_URI;
-        console.log('MongoDB URI:', maskMongoUri(uri));
-        console.log('MongoDB URI scheme:', uri && uri.startsWith('mongodb+srv://') ? 'mongodb+srv (SRV lookup)' : 'mongodb (standard)');
-
-        const conn = await mongoose.connect(uri, getMongoConnectOptions());
-        console.log(`MongoDB Connected: ${conn.connection.host}`);
+        console.log(`Supabase Client initialized with URL: ${supabaseUrl}`);
     } catch (error) {
-        const primaryUri = process.env.MONGODB_URI;
-        const fallbackUri = process.env.MONGODB_URI_FALLBACK;
-
-        const isSrvNotFound =
-            (error && (error.code === 'ENOTFOUND' || error.code === 'EREFUSED')) &&
-            typeof error.message === 'string' &&
-            error.message.includes('querySrv ENOTFOUND');
-
-        if (isSrvNotFound && fallbackUri) {
-            console.error(`MongoDB SRV lookup failed: ${error.message}`);
-            console.warn('Trying MongoDB fallback URI:', maskMongoUri(fallbackUri));
-
-            try {
-                const conn = await mongoose.connect(fallbackUri, getMongoConnectOptions());
-                console.log(`MongoDB Connected (fallback): ${conn.connection.host}`);
-                return;
-            } catch (fallbackError) {
-                console.error(`MongoDB Fallback Connection Error: ${fallbackError.message}`);
-                throw fallbackError;
-            }
-        }
-
-        console.error(`MongoDB Connection Error: ${error.message}`);
-        throw error;
+        console.error(`Supabase Initialization Error: ${error.message}`);
     }
 };
 
 module.exports = connectDB;
+module.exports.supabase = supabase;

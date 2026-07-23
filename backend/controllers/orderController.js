@@ -210,12 +210,32 @@ exports.updateOrderStatus = async(req, res) => {
         }
 
         if (orderStatus) {
+            const previousStatus = order.orderStatus;
             order.orderStatus = orderStatus;
             order.statusHistory.push({
                 status: orderStatus,
                 note: note || `Status updated to ${orderStatus}`,
                 date: new Date()
             });
+
+            // Restore stock & coupon if status changes to cancelled
+            if (orderStatus === 'cancelled' && previousStatus !== 'cancelled') {
+                if (order.items && order.items.length > 0) {
+                    const bulkOps = order.items.map(item => ({
+                        updateOne: {
+                            filter: { _id: item.book },
+                            update: { $inc: { stock: item.quantity, totalSold: -item.quantity } }
+                        }
+                    }));
+                    await Book.bulkWrite(bulkOps);
+                }
+                if (order.couponCode) {
+                    await Coupon.updateOne(
+                        { code: order.couponCode.toUpperCase(), usedCount: { $gt: 0 } },
+                        { $inc: { usedCount: -1 } }
+                    );
+                }
+            }
         }
 
         if (paymentStatus) order.paymentStatus = paymentStatus;
@@ -228,5 +248,65 @@ exports.updateOrderStatus = async(req, res) => {
         res.json({ order: updatedOrder });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// @desc    Cancel order (Student or Admin)
+// @route   PUT /api/orders/:id/cancel
+exports.cancelOrder = async (req, res) => {
+    try {
+        const { reason } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: 'الطلب غير موجود' });
+        }
+
+        // Check owner or admin
+        const isOwner = order.user && order.user.toString() === req.user._id.toString();
+        if (!isOwner && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'غير مصرح لك بإلغاء هذا الطلب' });
+        }
+
+        if (order.orderStatus === 'cancelled') {
+            return res.status(400).json({ message: 'الطلب ملغي بالفعل' });
+        }
+
+        if (['shipped', 'delivered'].includes(order.orderStatus)) {
+            return res.status(400).json({ message: 'لا يمكن إلغاء الطلب بعد شحنه أو تسليمه' });
+        }
+
+        // Restore stock and decrement totalSold
+        if (order.items && order.items.length > 0) {
+            const bulkOps = order.items.map(item => ({
+                updateOne: {
+                    filter: { _id: item.book },
+                    update: { $inc: { stock: item.quantity, totalSold: -item.quantity } }
+                }
+            }));
+            await Book.bulkWrite(bulkOps);
+        }
+
+        // Restore coupon usage count
+        if (order.couponCode) {
+            await Coupon.updateOne(
+                { code: order.couponCode.toUpperCase(), usedCount: { $gt: 0 } },
+                { $inc: { usedCount: -1 } }
+            );
+        }
+
+        order.orderStatus = 'cancelled';
+        order.statusHistory.push({
+            status: 'cancelled',
+            note: reason ? `تم إلغاء الطلب: ${reason}` : 'تم إلغاء الطلب بواسطة العميل',
+            date: new Date()
+        });
+
+        await order.save();
+
+        const updatedOrder = await Order.findById(order._id).populate('user', 'name email address phone');
+        res.json({ message: 'تم إلغاء الطلب بنجاح', order: updatedOrder });
+    } catch (error) {
+        res.status(500).json({ message: 'خطأ في الخادم', error: error.message });
     }
 };

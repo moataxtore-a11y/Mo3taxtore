@@ -33,6 +33,8 @@ const ProfilePage = () => {
     },
   });
 
+  const [cancelLoading, setCancelLoading] = useState(false);
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -57,6 +59,21 @@ const ProfilePage = () => {
       console.error('Error fetching orders:', err);
     } finally {
       setOrdersLoading(false);
+    }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm('هل أنت تأكد من رغبتك في إلغاء هذا الطلب؟')) return;
+    setCancelLoading(true);
+    try {
+      await api.put(`/orders/${orderId}/cancel`);
+      toast.success('تم إلغاء الطلب بنجاح');
+      setSelectedOrder(null);
+      fetchOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'فشل إلغاء الطلب');
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -437,10 +454,19 @@ const ProfilePage = () => {
                   </div>
 
                   <div className="mt-6 pt-4 border-[#D6E4E3] border-t">
-                    <div className="flex justify-between items-center font-bold">
+                    <div className="flex justify-between items-center font-bold mb-3">
                       <span className="text-[#1E2F2E] text-lg">الإجمالي النهائي</span>
                       <span className="font-black text-transparent bg-clip-text bg-gradient-to-l from-[#31605F] to-[#244948] text-2xl">{selectedOrder.total} ج.م</span>
                     </div>
+                    {['placed', 'confirmed', 'processing'].includes(selectedOrder.orderStatus) && (
+                      <button
+                        onClick={() => handleCancelOrder(selectedOrder._id)}
+                        disabled={cancelLoading}
+                        className="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 py-3 rounded-2xl font-black text-sm transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                      >
+                        <FiX className="w-4 h-4" /> {cancelLoading ? 'جاري الإلغاء...' : 'إلغاء هذا الطلب'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>

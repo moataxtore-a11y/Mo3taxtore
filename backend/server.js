@@ -186,13 +186,11 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Connect to MongoDB & Start Server
+// Connect to Database & Start Server
 const startServer = async() => {
     try {
-        if (!process.env.MONGODB_URI) {
-            console.error('❌ Missing required env var: MONGODB_URI');
-            console.error('   Create backend/.env (not committed) and set MONGODB_URI=mongodb://...');
-            process.exit(1);
+        if (!process.env.SUPABASE_URL) {
+            console.warn('⚠️ Missing SUPABASE_URL in backend/.env. Using default configuration.');
         }
 
         await connectDB();

@@ -32,11 +32,178 @@ const StatusHistoryItem = ({ status, date, note }) => {
   );
 };
 
+const ADMIN_DASHBOARD_TABS = [
+  { id: 'overview', label: 'نظرة عامة', icon: FiEye },
+  { id: 'users', label: 'المستخدمون', icon: FiUsers },
+  { id: 'books', label: 'الكتب والملازم', icon: FiBook },
+  { id: 'store_products', label: 'منتجات المتجر', icon: FiGrid },
+  { id: 'orders', label: 'الطلبات', icon: FiShoppingCart },
+  { id: 'categories', label: 'المواد الدراسية', icon: FiList },
+  { id: 'store_categories', label: 'أقسام المتجر', icon: FiGrid },
+  { id: 'grades', label: 'الصفوف الدراسية', icon: FiTrendingUp },
+  { id: 'cms', label: 'المحتوى العام', icon: FiLayers },
+  { id: 'announcements', label: 'الرسائل والإعلانات', icon: FiAlertCircle },
+  { id: 'logistics', label: 'اللوجستيات والشحن', icon: FiTruck },
+  { id: 'teachers_list', label: 'إدارة المدرسين', icon: FiUsers },
+  { id: 'coupons', label: 'الكوبونات', icon: FiDollarSign },
+];
+
+const AdminSidebar = ({
+  activeTab,
+  handleTabChange,
+  orders,
+  openAddBookModal,
+  user
+}) => {
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+
+  return (
+    <motion.div
+      initial={false}
+      animate={{ width: isSidebarExpanded ? 280 : 84 }}
+      transition={{ type: "tween", duration: 0.22, ease: "easeOut" }}
+      onHoverStart={() => setIsSidebarExpanded(true)}
+      onHoverEnd={() => setIsSidebarExpanded(false)}
+      className="hidden top-[120px] right-4 bottom-4 z-50 fixed lg:flex flex-col bg-white/85 shadow-[0_20px_50px_rgba(30,47,46,0.08)] backdrop-blur-xl border border-white/60 rounded-[2.5rem]"
+    >
+      {/* Brand Header */}
+      <div className="flex items-center justify-center py-6 border-b border-primary/5 px-4">
+        <img src={logo} className="w-20 h-20 object-contain shrink-0" alt="Logo" />
+      </div>
+
+      {/* Dynamic Scrollable Area */}
+      <div className="flex-1 px-3 overflow-y-auto custom-sidebar-scroll" style={{ direction: 'ltr' }}>
+        <div style={{ direction: 'rtl' }} className="flex flex-col pt-6 pb-16 min-h-[50vh]">
+          <style>
+            {`
+              .custom-sidebar-scroll::-webkit-scrollbar {
+                width: 0px;
+              }
+              .custom-sidebar-scroll {
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+              }
+            `}
+          </style>
+
+          {[
+            { title: 'القائمة', count: '5', items: ['overview', 'users', 'books', 'store_products', 'orders'] },
+            { title: 'الخدمات', count: '5', items: ['categories', 'store_categories', 'grades', 'cms', 'announcements'] },
+            { title: 'الإعدادات', count: '3', items: ['logistics', 'teachers_list', 'coupons'] }
+          ].map((group) => (
+            <div key={group.title} className="mb-6">
+              {isSidebarExpanded && (
+                <p className="mb-3 px-3 font-black text-text-muted/50 text-[9px] uppercase tracking-[0.2em]">{group.title}</p>
+              )}
+              <div className="flex flex-col gap-1.5">
+                {ADMIN_DASHBOARD_TABS.filter(t => group.items.includes(t.id)).map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  const pendingCount = tab.id === 'orders' ? orders.filter(o => o.status === 'placed').length : 0;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`group relative flex items-center transition-all duration-300 cursor-pointer
+                        ${isSidebarExpanded
+                          ? isActive
+                            ? 'bg-primary text-white rounded-r-2xl rounded-l-none ml-[-12px] pl-6 pr-4 py-3.5 w-[calc(100%+12px)] z-10 shadow-lg after:content-[""] after:absolute after:left-0 after:bottom-full after:w-4 after:h-4 after:bg-transparent after:rounded-bl-[16px] after:shadow-[0_8px_0_0_#31605F] after:pointer-events-none before:content-[""] before:absolute before:left-0 before:top-full before:w-4 before:h-4 before:bg-transparent before:rounded-tl-[16px] before:shadow-[0_-8px_0_0_#31605F] before:pointer-events-none'
+                            : 'rounded-2xl px-4 py-3 text-text-secondary hover:bg-primary/5 hover:text-primary w-full'
+                          : isActive
+                            ? 'bg-primary text-white rounded-full w-12 h-12 justify-center mx-auto shadow-md z-10 scale-105'
+                            : 'rounded-full w-12 h-12 justify-center mx-auto text-text-secondary hover:bg-primary/5 hover:text-primary w-full'
+                        }`}
+                    >
+                      <div className="relative flex justify-center items-center w-5 h-5 shrink-0">
+                        <tab.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-primary/70 group-hover:text-primary'}`} />
+                        {pendingCount > 0 && (
+                          <span className="-top-1.5 -right-1.5 absolute flex justify-center items-center bg-red-500 shadow-md rounded-full w-3.5 h-3.5 font-black text-[8px] text-white animate-bounce">
+                            {pendingCount}
+                          </span>
+                        )}
+                      </div>
+
+                      {isSidebarExpanded && (
+                        <div className="flex flex-1 justify-between items-center ml-1">
+                          <span className={`mr-3 overflow-hidden font-heading text-[12px] whitespace-nowrap transition-all ${isActive ? 'font-black' : 'font-bold'}`}>{tab.label}</span>
+                          {pendingCount > 0 && (
+                            <span className="bg-red-500 shadow-sm px-1.5 py-0.5 rounded-full font-bold text-[9px] text-white">
+                              {pendingCount}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {!isSidebarExpanded && (
+                        <div className={`absolute right-0 w-1 rounded-l-full bg-primary transition-all duration-200 ${isActive ? 'h-6' : 'h-0 group-hover:h-3'}`} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Persistent Action & Profile Footer */}
+      <div className="bg-gradient-to-t from-primary/5 to-transparent px-4 pt-4 pb-8 border-primary/5 border-t">
+        <div className="mb-4">
+          {isSidebarExpanded ? (
+            <button
+              onClick={openAddBookModal}
+              className="flex justify-center items-center gap-2.5 bg-primary/10 hover:bg-primary/15 border border-primary/10 shadow-sm py-3.5 rounded-2xl w-full text-primary transition-all duration-300 cursor-pointer"
+            >
+              <FiPlus className="w-5 h-5 shrink-0" />
+              <span className="font-heading font-black text-xs whitespace-nowrap">إضافة كتاب / ملزمة</span>
+            </button>
+          ) : (
+            <button
+              onClick={openAddBookModal}
+              className="flex justify-center items-center mx-auto bg-primary/10 hover:bg-primary/15 border border-primary/10 shadow-sm w-12 h-12 rounded-full text-primary transition-all duration-300 cursor-pointer"
+              title="إضافة كتاب / ملزمة"
+            >
+              <FiPlus className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        <Link
+          to="/profile"
+          className={`flex items-center transition-all duration-300 hover:bg-primary/5 border border-transparent hover:border-primary/10 shadow-sm rounded-2xl group relative ${isSidebarExpanded ? 'px-3 py-3 bg-primary/5' : 'justify-center p-1.5 bg-transparent shadow-none'
+            }`}
+        >
+          <div className={`shrink-0 flex justify-center items-center bg-primary/10 border border-primary/10 shadow-sm transition-all duration-300 ${isSidebarExpanded ? 'w-10 h-10 rounded-xl' : 'w-11 h-11 rounded-full'
+            } font-black text-primary text-base group-hover:rotate-6`}>
+            {user?.name?.charAt(0) || 'A'}
+          </div>
+          {isSidebarExpanded && (
+            <motion.div
+              initial={{ opacity: 0, x: 5 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.15 }}
+              exit={{ opacity: 0, x: 5 }}
+              className="flex-1 mr-3 min-w-0 text-right"
+            >
+              <p className="font-heading font-black text-text-primary text-xs truncate leading-tight">{user?.name}</p>
+              <p className="font-bold text-text-muted text-[10px] mt-0.5">{user?.role === 'admin' ? 'مدير المنصة' : 'مدرس'}</p>
+            </motion.div>
+          )}
+
+          {isSidebarExpanded && (
+            <div className="bg-primary/5 opacity-0 group-hover:opacity-100 p-2 rounded-lg transition-opacity duration-200 ml-1">
+              <FiSettings className="w-4 h-4 text-primary" />
+            </div>
+          )}
+        </Link>
+      </div>
+    </motion.div>
+  );
+};
+
 const AdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [chartView, setChartView] = useState('daily');
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
@@ -799,21 +966,7 @@ const AdminDashboard = () => {
     });
   };
 
-  const tabs = [
-    { id: 'overview', label: 'نظرة عامة', icon: FiEye },
-    { id: 'users', label: 'المستخدمون', icon: FiUsers },
-    { id: 'books', label: 'الكتب والملازم', icon: FiBook },
-    { id: 'store_products', label: 'منتجات المتجر', icon: FiGrid },
-    { id: 'orders', label: 'الطلبات', icon: FiShoppingCart },
-    { id: 'categories', label: 'المواد الدراسية', icon: FiList },
-    { id: 'store_categories', label: 'أقسام المتجر', icon: FiGrid },
-    { id: 'grades', label: 'الصفوف الدراسية', icon: FiTrendingUp },
-    { id: 'cms', label: 'المحتوى العام', icon: FiLayers },
-    { id: 'announcements', label: 'الرسائل والإعلانات', icon: FiAlertCircle },
-    { id: 'logistics', label: 'اللوجستيات والشحن', icon: FiTruck },
-    { id: 'teachers_list', label: 'إدارة المدرسين', icon: FiUsers },
-    { id: 'coupons', label: 'الكوبونات', icon: FiDollarSign },
-  ];
+  const tabs = ADMIN_DASHBOARD_TABS;
 
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
@@ -1006,131 +1159,13 @@ const AdminDashboard = () => {
       </div>
 
       {/* Super Snappy Premium Floating Sidebar */}
-      <motion.div
-        initial={false}
-        animate={{ width: isSidebarExpanded ? 275 : 82 }}
-        transition={{ type: "tween", duration: 0.18, ease: "easeOut" }}
-        onHoverStart={() => setIsSidebarExpanded(true)}
-        onHoverEnd={() => setIsSidebarExpanded(false)}
-        className="hidden top-[100px] right-1.5 bottom-4 z-50 fixed lg:flex flex-col bg-white/50 shadow-[0_30px_100px_rgba(0,0,0,0.12)] backdrop-blur-[60px] border border-white/60 rounded-[4.5rem] overflow-hidden"
-      >
-        <div className="pt-8" />
-
-        {/* Dynamic Scrollable Area */}
-        <div className="flex-1 px-2 overflow-y-auto custom-sidebar-scroll" style={{ direction: 'ltr' }}>
-          <div style={{ direction: 'rtl' }} className="flex flex-col pt-4 pb-16 min-h-[50vh]">
-            <style>
-              {`
-                .custom-sidebar-scroll::-webkit-scrollbar {
-                  width: 3px;
-                }
-                .custom-sidebar-scroll::-webkit-scrollbar-track {
-                  background: transparent;
-                }
-                .custom-sidebar-scroll::-webkit-scrollbar-thumb {
-                  background: rgba(49, 96, 95, 0.1);
-                  border-radius: 20px;
-                }
-              `}
-            </style>
-
-            {[
-              { title: 'القائمة', count: '5', items: ['overview', 'users', 'books', 'store_products', 'orders'] },
-              { title: 'الخدمات', count: '5', items: ['categories', 'store_categories', 'grades', 'cms', 'announcements'] },
-              { title: 'الإعدادات', count: '3', items: ['logistics', 'teachers_list', 'coupons'] }
-            ].map((group) => (
-              <div key={group.title} className="mb-8">
-                {isSidebarExpanded && (
-                  <p className="mb-4 px-4 font-black text-[#8FA7A6] text-[10px] uppercase tracking-[0.25em]">{group.title}: {group.count}</p>
-                )}
-                <div className="flex flex-col gap-2.5">
-                  {tabs.filter(t => group.items.includes(t.id)).map((tab) => {
-                    const isActive = activeTab === tab.id;
-                    const pendingCount = tab.id === 'orders' ? orders.filter(o => o.status === 'placed').length : 0;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => handleTabChange(tab.id)}
-                        className={`group relative flex items-center transition-all duration-200 w-full ${isSidebarExpanded ? 'rounded-3xl px-6 py-4' : 'rounded-3xl justify-center py-4 px-0'
-                          } ${isActive
-                            ? 'bg-primary text-white shadow-[0_15px_45px_rgba(49,96,95,0.35)] z-10'
-                            : 'text-text-secondary hover:bg-white/70 hover:text-primary'
-                          }`}
-                      >
-                        <div className="relative flex justify-center items-center w-6 h-6 shrink-0">
-                          <tab.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-primary opacity-60 group-hover:opacity-100'}`} />
-                          {pendingCount > 0 && (
-                            <span className="-top-1.5 -right-1.5 absolute flex justify-center items-center bg-red-500 shadow-lg rounded-full w-4 h-4 font-black text-[9px] text-white animate-bounce">
-                              {pendingCount}
-                            </span>
-                          )}
-                        </div>
-
-                        {isSidebarExpanded && (
-                          <div className="flex flex-1 justify-between items-center ml-1">
-                            <span className="mr-3 overflow-hidden font-heading font-black text-[13px] whitespace-nowrap transition-all">{tab.label}</span>
-                            {pendingCount > 0 && (
-                              <span className="bg-red-500 shadow-sm px-2 py-0.5 rounded-full font-bold text-[10px] text-white">
-                                {pendingCount}
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {!isSidebarExpanded && (
-                          <div className={`absolute left-0 w-1 rounded-full bg-primary transition-all duration-200 ${isActive ? 'h-8' : 'h-0 group-hover:h-3'}`} />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Persistent Action & Profile Footer */}
-        <div className="bg-white/20 px-6 pt-6 pb-12 border-white/30 border-t">
-          {isSidebarExpanded && (
-            <button
-              onClick={openAddBookModal}
-              className="flex justify-center items-center gap-3 bg-primary shadow-2xl shadow-primary/40 mb-8 px-6 py-4.5 rounded-full w-full text-white hover:scale-[1.03] active:scale-95 transition-all"
-            >
-              <FiPlus className="w-6 h-6" />
-              <span className="font-heading font-black text-sm whitespace-nowrap">إضافة سريعة</span>
-            </button>
-          )}
-
-          <Link
-            to="/profile"
-            className={`flex items-center transition-all duration-200 hover:bg-white/50 border border-white/60 shadow-lg rounded-[2.5rem] group relative ${isSidebarExpanded ? 'px-4 py-4 bg-white/30' : 'justify-center p-2 border-transparent bg-transparent shadow-none'
-              }`}
-          >
-            <div className={`shrink-0 flex justify-center items-center bg-gradient-to-br from-primary to-primary-dark shadow-xl shadow-primary/30 transition-all duration-200 ${isSidebarExpanded ? 'w-10 h-10 rounded-2xl' : 'w-12 h-12 rounded-3xl'
-              } font-black text-white text-base group-hover:rotate-12`}>
-              {user?.name?.charAt(0) || 'A'}
-            </div>
-            {isSidebarExpanded && (
-              <motion.div
-                initial={{ opacity: 0, x: 5 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.15 }}
-                exit={{ opacity: 0, x: 5 }}
-                className="flex-1 mr-3 min-w-0 text-right"
-              >
-                <p className="font-heading font-black text-primary text-xs truncate">{user?.name}</p>
-                <p className="font-bold text-[#8FA7A6] text-[10px]">{user?.role === 'admin' ? 'مدير المنصة' : 'مدرس'}</p>
-              </motion.div>
-            )}
-
-            {isSidebarExpanded && (
-              <div className="bg-primary/10 opacity-0 group-hover:opacity-100 p-2.5 rounded-xl transition-opacity duration-200">
-                <FiSettings className="w-4 h-4 text-primary" />
-              </div>
-            )}
-          </Link>
-        </div>
-      </motion.div>
+      <AdminSidebar
+        activeTab={activeTab}
+        handleTabChange={handleTabChange}
+        orders={orders}
+        openAddBookModal={openAddBookModal}
+        user={user}
+      />
 
 
 
@@ -1444,11 +1479,34 @@ const AdminDashboard = () => {
                 <h2 className="mb-2 font-heading font-black text-text-primary text-2xl md:text-4xl">إدارة الأعضاء</h2>
                 <p className="font-bold text-text-secondary text-xs md:text-sm">تحكم في صلاحيات المستخدمين والطلاب (إجمالي: {users.length})</p>
               </div>
-              <div className="flex flex-wrap justify-center gap-2">
-                <span className="bg-primary/10 px-4 py-2 rounded-xl font-bold text-primary text-xs">أدمن: {users.filter(u => u.role === 'admin').length}</span>
-                <span className="bg-blue-100 px-4 py-2 rounded-xl font-bold text-blue-600 text-xs">مدرس: {users.filter(u => u.role === 'teacher').length}</span>
-                <span className="bg-green-100 px-4 py-2 rounded-xl font-bold text-green-600 text-xs">طالب: {users.filter(u => u.role === 'student' || !u.role).length}</span>
+              <div className="flex flex-col items-center gap-4">
+                <div className="flex flex-wrap justify-center gap-2">
+                  <span className="bg-primary/10 px-4 py-2 rounded-xl font-bold text-primary text-xs">أدمن: {users.filter(u => u.role === 'admin').length}</span>
+                  <span className="bg-blue-100 px-4 py-2 rounded-xl font-bold text-blue-600 text-xs">مدرس: {users.filter(u => u.role === 'teacher').length}</span>
+                  <span className="bg-green-100 px-4 py-2 rounded-xl font-bold text-green-600 text-xs">طالب: {users.filter(u => u.role === 'student' || !u.role).length}</span>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={openUserModal}
+                  className="flex items-center gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 px-6 py-3 rounded-2xl font-black text-white text-sm transition-all"
+                >
+                  <FiPlus className="w-5 h-5" />
+                  إضافة مستخدم
+                </motion.button>
               </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative">
+              <FiSearch className="absolute right-5 top-1/2 -translate-y-1/2 text-text-muted w-5 h-5" />
+              <input
+                type="text"
+                placeholder="ابحث بالاسم أو البريد أو رقم الهاتف..."
+                value={userFilter}
+                onChange={(e) => setUserFilter(e.target.value)}
+                className="bg-white/60 backdrop-blur-md px-14 py-4 border border-white/80 rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 w-full font-bold text-text-primary placeholder:text-text-muted/50"
+              />
             </div>
 
             <div className="space-y-4">
@@ -3743,7 +3801,7 @@ const AdminDashboard = () => {
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-between items-center mb-10">
-                  <h2 className="font-heading font-black text-text-primary text-3xl">سحر الخصم</h2>
+                  <h2 className="font-heading font-black text-text-primary text-3xl">سعر الخصم</h2>
                   <button onClick={() => setShowCouponModal(false)} className="hover:bg-primary/5 p-3 rounded-2xl transition-all">
                     <FiX className="w-6 h-6" />
                   </button>

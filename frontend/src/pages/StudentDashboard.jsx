@@ -27,6 +27,10 @@ const StudentDashboard = () => {
   const [reviewData, setReviewData] = useState({ bookId: '', rating: 5, comment: '' });
   const [showReviewModal, setShowReviewModal] = useState(false);
 
+  const [cancellingOrder, setCancellingOrder] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelLoading, setCancelLoading] = useState(false);
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -39,6 +43,22 @@ const StudentDashboard = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!cancellingOrder) return;
+    setCancelLoading(true);
+    try {
+      await api.put(`/orders/${cancellingOrder._id}/cancel`, { reason: cancelReason });
+      toast.success('تم إلغاء الطلب بنجاح');
+      setCancellingOrder(null);
+      setCancelReason('');
+      fetchOrders();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'فشل إلغاء الطلب');
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -176,15 +196,23 @@ const StudentDashboard = () => {
                                    <p className="font-bold text-[#8FA7A6] text-[11px]">{new Date(order.createdAt).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' })}</p>
                                 </div>
                              </div>
-                             <div className="flex items-center gap-3 w-full sm:w-auto">
-                                <span className={`px-3 py-1 rounded-full text-[10px] font-black ${
-                                   order.orderStatus === 'delivered' ? 'bg-emerald-50 text-emerald-700' :
-                                   order.orderStatus === 'cancelled' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'
-                                }`}>
-                                   {ORDER_STATUS_MAP[order.orderStatus]?.label || order.orderStatus}
-                                </span>
-                                <Link to={`/invoice-preview/${order._id}`} className="mr-auto sm:mr-0 bg-white hover:bg-white shadow-sm px-4 py-2 border border-[#E5E7EB] rounded-full font-black text-primary text-xs transition-all active:scale-95">👀 الفاتورة</Link>
-                             </div>
+                              <div className="flex items-center gap-3 w-full sm:w-auto">
+                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black ${
+                                    order.orderStatus === 'delivered' ? 'bg-emerald-50 text-emerald-700' :
+                                    order.orderStatus === 'cancelled' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'
+                                 }`}>
+                                    {ORDER_STATUS_MAP[order.orderStatus]?.label || order.orderStatus}
+                                 </span>
+                                 {['placed', 'confirmed', 'processing'].includes(order.orderStatus) && (
+                                   <button
+                                      onClick={() => { setCancellingOrder(order); setCancelReason(''); }}
+                                      className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1 rounded-full font-black text-[11px] transition-all active:scale-95 flex items-center gap-1 border border-red-100"
+                                   >
+                                      <FiXCircle className="w-3.5 h-3.5" /> إلغاء الطلب
+                                   </button>
+                                 )}
+                                 <Link to={`/invoice-preview/${order._id}`} className="mr-auto sm:mr-0 bg-white hover:bg-white shadow-sm px-4 py-2 border border-[#E5E7EB] rounded-full font-black text-primary text-xs transition-all active:scale-95">👀 الفاتورة</Link>
+                              </div>
                           </div>
                           
                           <div className="px-6 md:px-8 py-6">
@@ -292,6 +320,44 @@ const StudentDashboard = () => {
                 تأكيد التقييم
               </button>
               <button onClick={() => setShowReviewModal(false)} className="py-2.5 font-bold text-[#8FA7A6] text-sm hover:text-red-500 transition-colors">إغلاق</button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Cancel Order Modal */}
+      {cancellingOrder && (
+        <div className="z-[100] fixed inset-0 flex justify-center items-center bg-black/40 backdrop-blur-sm px-4" onClick={() => setCancellingOrder(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-6">
+               <div className="mx-auto mb-3 flex items-center justify-center w-12 h-12 rounded-full bg-red-50 text-red-500">
+                 <FiXCircle className="w-6 h-6" />
+               </div>
+               <h3 className="font-black text-[#1E2F2E] text-2xl">تأكيد إلغاء الطلب</h3>
+               <p className="text-[#8FA7A6] text-sm mt-1">هل أنت تأكد من رغبتك في إلغاء الطلب #{cancellingOrder._id.slice(-8).toUpperCase()}؟</p>
+            </div>
+
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="سبب الإلغاء (اختياري)..."
+              className="bg-[#F9FBFA] p-4 border border-transparent focus:border-red-300 rounded-2xl outline-none w-full h-24 text-sm font-bold resize-none transition-all"
+            />
+
+            <div className="flex flex-col gap-2 mt-6">
+              <button 
+                onClick={handleCancelOrder}
+                disabled={cancelLoading}
+                className="bg-red-500 hover:bg-red-600 disabled:opacity-50 py-3.5 rounded-2xl font-black text-white shadow-xl shadow-red-500/20 transition-all active:scale-95 cursor-pointer"
+              >
+                {cancelLoading ? 'جاري الإلغاء...' : 'تأكيد الإلغاء'}
+              </button>
+              <button onClick={() => setCancellingOrder(null)} className="py-2.5 font-bold text-[#8FA7A6] text-sm hover:text-gray-700 transition-colors">تراجع</button>
             </div>
           </motion.div>
         </div>

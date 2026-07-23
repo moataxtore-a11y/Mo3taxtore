@@ -1,22 +1,52 @@
-const mongoose = require('mongoose');
+const { supabase } = require('../config/db');
 
-const teacherNameSchema = new mongoose.Schema({
-    owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-        index: true,
-    },
-    name: {
-        type: String,
-        required: true,
-        trim: true,
-        maxlength: 100,
-    },
-}, {
-    timestamps: true,
-});
+const mapTeacherNameFromPg = (data) => {
+    if (!data) return null;
+    return {
+        _id: data.id,
+        id: data.id,
+        owner: data.owner_id,
+        name: data.name,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+    };
+};
 
-teacherNameSchema.index({ owner: 1, name: 1 }, { unique: true });
+class TeacherName {
+    static async find(query = {}) {
+        let builder = supabase.from('teacher_names').select('*');
+        if (query.owner) builder = builder.eq('owner_id', query.owner);
+        builder = builder.order('created_at', { ascending: false });
 
-module.exports = mongoose.model('TeacherName', teacherNameSchema);
+        const { data, error } = await builder;
+        if (error) throw error;
+        return (data || []).map(mapTeacherNameFromPg);
+    }
+
+    static async findOne(query) {
+        let builder = supabase.from('teacher_names').select('*');
+        if (query.owner) builder = builder.eq('owner_id', query.owner);
+        if (query.name) builder = builder.eq('name', query.name.trim());
+        const { data, error } = await builder.maybeSingle();
+        if (error) throw error;
+        return mapTeacherNameFromPg(data);
+    }
+
+    static async create(tnData) {
+        const payload = {
+            owner_id: tnData.owner,
+            name: tnData.name,
+        };
+        const { data, error } = await supabase.from('teacher_names').insert(payload).select().single();
+        if (error) throw error;
+        return mapTeacherNameFromPg(data);
+    }
+
+    static async findByIdAndDelete(id) {
+        const { data, error } = await supabase.from('teacher_names').delete().eq('id', id).select().single();
+        if (error) throw error;
+        return mapTeacherNameFromPg(data);
+    }
+}
+
+module.exports = TeacherName;
