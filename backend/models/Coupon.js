@@ -36,6 +36,9 @@ const mapCouponFromPg = (data) => {
             }).eq('id', this.id).select().single();
             if (error) throw error;
             return mapCouponFromPg(updated);
+        },
+        deleteOne: async function() {
+            return await Coupon.findByIdAndDelete(this.id);
         }
     };
 };

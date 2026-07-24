@@ -10,6 +10,12 @@ const mapGradeFromPg = (data) => {
         isActive: Boolean(data.is_active),
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        deleteOne: async function() {
+            return await Grade.findByIdAndDelete(this.id);
+        },
+        save: async function() {
+            return await Grade.findByIdAndUpdate(this.id, this);
+        }
     };
 };
 

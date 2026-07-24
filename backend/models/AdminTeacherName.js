@@ -10,6 +10,12 @@ const mapAdminTeacherFromPg = (data) => {
         photo: data.photo || '',
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        deleteOne: async function() {
+            return await AdminTeacherName.findByIdAndDelete(this.id);
+        },
+        save: async function() {
+            return await AdminTeacherName.findByIdAndUpdate(this.id, this);
+        }
     };
 };
 

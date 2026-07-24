@@ -39,6 +39,12 @@ const mapUserFromPg = (data) => {
                 console.error('Password comparison failed:', err);
                 return false;
             }
+        },
+        deleteOne: async function() {
+            return await User.findByIdAndDelete(this.id);
+        },
+        save: async function() {
+            return await User.findByIdAndUpdate(this.id, this);
         }
     };
 };
@@ -132,7 +138,8 @@ class User {
     }
 
     static async findByIdAndDelete(id) {
-        const { data, error } = await supabase.from('users').delete().eq('id', id).select().single();
+        if (!id) return null;
+        const { data, error } = await supabase.from('users').delete().eq('id', id).select().maybeSingle();
         if (error) throw error;
         return mapUserFromPg(data);
     }

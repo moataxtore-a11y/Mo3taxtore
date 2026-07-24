@@ -14,6 +14,12 @@ const mapAnnouncementFromPg = (data) => {
         icon: data.icon || 'FiAlertCircle',
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        deleteOne: async function() {
+            return await Announcement.findByIdAndDelete(this.id);
+        },
+        save: async function() {
+            return await Announcement.findByIdAndUpdate(this.id, this);
+        }
     };
 };
 

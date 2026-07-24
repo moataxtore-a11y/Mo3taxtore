@@ -27,6 +27,12 @@ const mapBookFromPg = (data) => {
         triggersFreeShipping: Boolean(data.triggers_free_shipping),
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        deleteOne: async function() {
+            return await Book.findByIdAndDelete(this.id);
+        },
+        save: async function() {
+            return await Book.findByIdAndUpdate(this.id, this);
+        }
     };
 };
 

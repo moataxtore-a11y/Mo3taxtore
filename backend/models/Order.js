@@ -50,6 +50,11 @@ const mapOrderFromPg = async (data, fetchItems = true) => {
             }).eq('id', this.id).select().single();
             if (error) throw error;
             return await mapOrderFromPg(updated, true);
+        },
+        deleteOne: async function () {
+            const { error } = await supabase.from('orders').delete().eq('id', this.id);
+            if (error) throw error;
+            return this;
         }
     };
     return orderObj;

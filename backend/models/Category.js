@@ -15,6 +15,12 @@ const mapCategoryFromPg = (data) => {
         order: Number(data.order_num || 0),
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        deleteOne: async function() {
+            return await Category.findByIdAndDelete(this.id);
+        },
+        save: async function() {
+            return await Category.findByIdAndUpdate(this.id, this);
+        }
     };
 };
 
