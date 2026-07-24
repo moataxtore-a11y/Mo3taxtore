@@ -148,9 +148,113 @@ class Book {
                 builder = builder.eq('is_store_product', query.isStoreProduct);
             }
         }
+        if (query.stock !== undefined) {
+            if (typeof query.stock === 'object' && query.stock.$lte !== undefined) {
+                builder = builder.lte('stock', query.stock.$lte);
+            } else if (typeof query.stock !== 'object') {
+                builder = builder.eq('stock', query.stock);
+            }
+        }
         const { count, error } = await builder;
         if (error) throw error;
         return count || 0;
+    }
+
+    static async aggregate(pipeline) {
+        if (!pipeline || !pipeline.length) return [];
+        const { data, error } = await supabase.from('books').select('total_sold');
+        if (error) throw error;
+        const books = (data || []).map(mapBookFromPg);
+        let results = books;
+        for (const stage of pipeline) {
+            if (stage.$group) {
+                const key = stage.$group._id;
+                const sums = {};
+                for (const [field, expr] of Object.entries(stage.$group)) {
+                    if (field === '_id') continue;
+                    if (expr.$sum) {
+                        const src = typeof expr.$sum === 'string' ? expr.$sum.replace('$', '') : expr.$sum;
+                        if (typeof src === 'number') {
+                            sums[field] = results.length * src;
+                        } else {
+                            sums[field] = results.reduce((acc, r) => acc + (Number(r[src]) || 0), 0);
+                        }
+                    }
+                }
+                results = key === null ? [{ ...sums }] : [sums];
+            } else if (stage.$sort) {
+                const key = Object.keys(stage.$sort)[0];
+                const dir = stage.$sort[key];
+                results.sort((a, b) => {
+                    const va = a[key] instanceof Date ? a[key] : new Date(a[key] || 0);
+                    const vb = b[key] instanceof Date ? b[key] : new Date(b[key] || 0);
+                    return dir === -1 ? vb - va : va - vb;
+                });
+            } else if (stage.$limit) {
+                results = results.slice(0, stage.$limit);
+            } else if (stage.$match) {
+                results = results.filter(doc => {
+                    return Object.entries(stage.$match).every(([k, v]) => {
+                        if (v && typeof v === 'object') {
+                            if (v.$ne !== undefined) return doc[k] !== v.$ne;
+                            if (v.$gte !== undefined) return new Date(doc[k]) >= new Date(v.$gte);
+                            if (v.$lte !== undefined) return new Date(doc[k]) <= new Date(v.$lte);
+                            if (v.$in) return v.$in.includes(doc[k]);
+                        }
+                        return doc[k] === v;
+                    });
+                });
+            } else if (stage.$facet) {
+                const faceted = {};
+                for (const [facetName, facetPipeline] of Object.entries(stage.$facet)) {
+                    let facetResults = [...results];
+                    for (const fStage of facetPipeline) {
+                        if (fStage.$group) {
+                            const sums = {};
+                            for (const [field, expr] of Object.entries(fStage.$group)) {
+                                if (field === '_id') continue;
+                                if (expr.$sum) {
+                                    const src = typeof expr.$sum === 'string' ? expr.$sum.replace('$', '') : expr.$sum;
+                                    if (typeof src === 'number') {
+                                        sums[field] = facetResults.length * src;
+                                    } else {
+                                        sums[field] = facetResults.reduce((acc, r) => acc + (Number(r[src]) || 0), 0);
+                                    }
+                                }
+                            }
+                            facetResults = [{ ...sums }];
+                        } else if (fStage.$match) {
+                            facetResults = facetResults.filter(doc => {
+                                return Object.entries(fStage.$match).every(([k, v]) => {
+                                    if (v && typeof v === 'object') {
+                                        if (v.$ne !== undefined) return doc[k] !== v.$ne;
+                                        if (v.$gte !== undefined) return new Date(doc[k]) >= new Date(v.$gte);
+                                        if (v.$lte !== undefined) return new Date(doc[k]) <= new Date(v.$lte);
+                                        if (v.$in) return v.$in.includes(doc[k]);
+                                    }
+                                    return doc[k] === v;
+                                });
+                            });
+                        } else if (fStage.$count) {
+                            facetResults = [{ [fStage.$count]: facetResults.length }];
+                        } else if (fStage.$sort) {
+                            const key = Object.keys(fStage.$sort)[0];
+                            const dir = fStage.$sort[key];
+                            facetResults.sort((a, b) => {
+                                const va = a[key] instanceof Date ? a[key] : new Date(a[key] || 0);
+                                const vb = b[key] instanceof Date ? b[key] : new Date(b[key] || 0);
+                                return dir === -1 ? vb - va : va - vb;
+                            });
+                        } else if (fStage.$limit) {
+                            facetResults = facetResults.slice(0, fStage.$limit);
+                        }
+                    }
+                    faceted[facetName] = facetResults;
+                }
+                results = [faceted];
+            }
+        }
+        return results;
     }
 
     static async bulkWrite(operations) {
