@@ -110,17 +110,21 @@ exports.heartbeat = async(req, res) => {
             return res.status(200).json({ status: 'admin_ignored' });
         }
 
-        // Upsert visitor record
-        await Visitor.findOneAndUpdate(
-            { identifier },
-            { lastActive: new Date(), isUser: !!isUser },
-            { upsert: true, new: true }
-        );
+        // Upsert visitor record (non-critical — don't fail the request)
+        try {
+            await Visitor.findOneAndUpdate(
+                { identifier },
+                { lastActive: new Date(), isUser: !!isUser },
+                { upsert: true, new: true }
+            );
+        } catch (visitorErr) {
+            console.error('Heartbeat visitor update ignored:', visitorErr.message);
+        }
 
         res.status(200).json({ status: 'ok' });
     } catch (error) {
         console.error('Heartbeat error:', error);
-        res.status(500).end();
+        res.status(200).json({ status: 'ok' });
     }
 };
 
