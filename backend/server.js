@@ -164,6 +164,21 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ─── Serve Frontend SPA ───
+const publicDir = path.join(__dirname, 'public');
+app.use(express.static(publicDir));
+app.get('/manifest.webmanifest', (req, res) => {
+    res.sendFile(path.join(publicDir, 'manifest.webmanifest'));
+});
+app.get('/sw.js', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(path.join(publicDir, 'sw.js'));
+});
+// SPA fallback: any non-API route returns index.html
+app.get(/^(?!\/api\/).*/, (req, res) => {
+    res.sendFile(path.join(publicDir, 'index.html'));
+});
+
 // Ignore common browser noise
 app.get(/^\/(\.well-known|favicon\.ico).*/, (req, res) => res.status(204).end());
 
