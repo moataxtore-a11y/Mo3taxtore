@@ -21,7 +21,7 @@
     }
   ],
   "outputDirectory": "frontend/dist",
-  "installCommand": "npm install && npm install --prefix backend",
-  "buildCommand": "npm run build --prefix frontend",
+  "installCommand": "bash scripts/vercel-install.sh",
+  "buildCommand": "bash scripts/vercel-build.sh",
   "framework": null
 }
