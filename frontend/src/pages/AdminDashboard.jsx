@@ -582,11 +582,11 @@ const AdminDashboard = () => {
       message: 'هل أنت متأكد من حذف هذا المستخدم نهائياً؟ ستفقد كل بياناته وحساباته.',
       onConfirm: async () => {
         try {
-          await api.delete(`/admin/users/${userId}`);
-          toast.success('تم حذف المستخدم بنجاح');
+          const res = await api.delete(`/admin/users/${userId}`);
+          toast.success(res.data?.message || 'تم حذف المستخدم بنجاح');
           fetchAll();
         } catch (err) {
-          toast.error('حدث خطأ أثناء الحذف');
+          toast.error(err.response?.data?.message || 'حدث خطأ أثناء الحذف');
         }
       }
     });

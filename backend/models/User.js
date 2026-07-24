@@ -139,6 +139,20 @@ class User {
 
     static async findByIdAndDelete(id) {
         if (!id) return null;
+        try {
+            const { data: userOrders } = await supabase.from('orders').select('id').eq('user_id', id);
+            if (userOrders && userOrders.length > 0) {
+                const orderIds = userOrders.map(o => o.id);
+                await supabase.from('order_items').delete().in('order_id', orderIds);
+                await supabase.from('orders').delete().eq('user_id', id);
+            }
+            await supabase.from('reviews').delete().eq('user_id', id);
+            await supabase.from('teacher_names').delete().eq('owner_id', id);
+            await supabase.from('books').update({ teacher_id: null }).eq('teacher_id', id);
+        } catch (cleanErr) {
+            console.warn('Pre-delete user cleanup warning:', cleanErr.message);
+        }
+
         const { data, error } = await supabase.from('users').delete().eq('id', id).select().maybeSingle();
         if (error) throw error;
         return mapUserFromPg(data);

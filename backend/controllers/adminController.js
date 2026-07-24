@@ -172,9 +172,15 @@ exports.getUser = async(req, res) => {
 // @route   DELETE /api/admin/users/:id
 exports.deleteUser = async(req, res) => {
     try {
-        const user = await User.findById(req.params.id);
+        const targetId = req.params.id;
+        const user = await User.findById(targetId);
         if (!user) {
             return res.status(404).json({ message: 'المستخدم غير موجود' });
+        }
+
+        // Prevent self-deletion if logged in
+        if (req.user && (req.user.id === targetId || req.user._id === targetId)) {
+            return res.status(400).json({ message: 'لا يمكن حذف حسابك الحاضر أثناء تسجيل الدخول' });
         }
 
         // Check if we are trying to delete the last admin
@@ -188,7 +194,8 @@ exports.deleteUser = async(req, res) => {
         await user.deleteOne();
         res.json({ message: 'تم حذف المستخدم بنجاح' });
     } catch (error) {
-        res.status(500).json({ message: 'خطأ في الخادم', error: error.message });
+        console.error('deleteUser Error:', error);
+        res.status(500).json({ message: error.message || 'خطأ في الخادم أثناء حذف المستخدم' });
     }
 };
 
