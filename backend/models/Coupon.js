@@ -1,4 +1,5 @@
 const { supabase } = require('../config/db');
+const { createChainable, createSingleChainable } = require('../utils/queryHelpers');
 
 const mapCouponFromPg = (data) => {
     if (!data) return null;
@@ -53,18 +54,20 @@ const mapCouponToPg = (data) => {
 };
 
 class Coupon {
-    static async find(query = {}) {
-        let builder = supabase.from('coupons').select('*').order('created_at', { ascending: false });
-        const { data, error } = await builder;
-        if (error) throw error;
-        return (data || []).map(mapCouponFromPg);
+    static find(query = {}) {
+        return createChainable(async () => {
+            let builder = supabase.from('coupons').select('*').order('created_at', { ascending: false });
+            const { data, error } = await builder;
+            if (error) throw error;
+            return (data || []).map(mapCouponFromPg);
+        });
     }
 
     static async findById(id) {
         if (!id) return null;
         const { data, error } = await supabase.from('coupons').select('*').eq('id', id).maybeSingle();
         if (error) throw error;
-        return mapCouponFromPg(data);
+        return withChainSingle(mapCouponFromPg(data), { table: 'coupons', idField: 'id' });
     }
 
     static async findOne(query) {
@@ -73,7 +76,7 @@ class Coupon {
         if (query.isActive !== undefined) builder = builder.eq('is_active', query.isActive);
         const { data, error } = await builder.maybeSingle();
         if (error) throw error;
-        return mapCouponFromPg(data);
+        return withChainSingle(mapCouponFromPg(data), { table: 'coupons', idField: 'id' });
     }
 
     static async create(couponData) {

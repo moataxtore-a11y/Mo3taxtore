@@ -58,7 +58,7 @@ exports.login = async(req, res) => {
     try {
         const { phone, password } = req.body;
 
-        const user = await User.findOne({ phone }).select('+password');
+        const user = await User.findOne({ phone });
         if (!user) {
             return res.status(401).json({ message: 'رقم الهاتف أو كلمة السر غير صحيحة' });
         }
@@ -89,8 +89,10 @@ exports.login = async(req, res) => {
 // @route   GET /api/auth/me
 exports.getMe = async(req, res) => {
     try {
-        const user = await User.findById(req.user._id).lean();
-        res.json({ user });
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        const { password, resetPasswordToken, resetPasswordExpires, verificationToken, ...safeUser } = user;
+        res.json({ user: safeUser });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
@@ -132,9 +134,11 @@ exports.forgotPassword = async(req, res) => {
         }
 
         const resetToken = crypto.randomBytes(32).toString('hex');
-        user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-        user.resetPasswordExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
-        await user.save({ validateBeforeSave: false });
+        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        await User.findByIdAndUpdate(user._id, {
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: Date.now() + 30 * 60 * 1000,
+        });
 
         // In production, send email/SMS with reset link
         // SECURITY: Never expose the token in the API response
@@ -155,17 +159,19 @@ exports.resetPassword = async(req, res) => {
 
         const user = await User.findOne({
             resetPasswordToken: hashedToken,
-            resetPasswordExpires: { $gt: Date.now() },
         });
 
-        if (!user) {
+        if (!user || (user.resetPasswordExpires && new Date(user.resetPasswordExpires) < new Date())) {
             return res.status(400).json({ message: 'Invalid or expired token' });
         }
 
-        user.password = req.body.password;
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpires = undefined;
-        await user.save();
+        const salt = await require('bcryptjs').genSalt(12);
+        const hashedPassword = await require('bcryptjs').hash(req.body.password, salt);
+        await User.findByIdAndUpdate(user._id, {
+            password: hashedPassword,
+            resetPasswordToken: undefined,
+            resetPasswordExpires: undefined,
+        });
 
         const token = generateToken(user._id);
         res.json({ token, message: 'Password reset successful' });
@@ -190,12 +196,11 @@ exports.updateProfile = async(req, res) => {
             updates.avatar = req.file.path;
         }
 
-        const user = await User.findByIdAndUpdate(req.user._id, updates, {
+        const { password, resetPasswordToken, resetPasswordExpires, verificationToken, ...safeUser } = await User.findByIdAndUpdate(req.user._id, updates, {
             new: true,
             runValidators: true,
         });
-
-        res.json({ user });
+        res.json({ user: safeUser });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }

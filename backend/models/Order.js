@@ -1,5 +1,6 @@
 const { supabase } = require('../config/db');
 const User = require('./User');
+const { createChainable, createSingleChainable } = require('../utils/queryHelpers');
 
 const fetchOrderItems = async (orderId) => {
     const { data, error } = await supabase.from('order_items').select('*').eq('order_id', orderId);
@@ -38,7 +39,7 @@ const mapOrderFromPg = async (data, fetchItems = true) => {
         isArchived: Boolean(data.is_archived),
         createdAt: data.created_at,
         updatedAt: data.updated_at,
-        save: async function() {
+        save: async function () {
             const { data: updated, error } = await supabase.from('orders').update({
                 order_status: this.orderStatus,
                 payment_status: this.paymentStatus,
@@ -106,8 +107,7 @@ class Order {
         }
 
         results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        results.lean = function() { return this; };
-        return results;
+        return withChainArray(results, { table: 'orders' });
     }
 
     static async findById(id) {
@@ -118,8 +118,7 @@ class Order {
 
         const orderObj = await mapOrderFromPg(data, true);
 
-        // Chain helper for populate('user')
-        orderObj.populate = async function(field, selectStr) {
+        orderObj.populate = async function (field, selectStr) {
             if (field === 'user' && this.user) {
                 const u = await User.findById(this.user);
                 this.user = u;
@@ -127,7 +126,38 @@ class Order {
             return this;
         };
 
-        return orderObj;
+        return withChainSingle(orderObj, { table: 'orders', idField: 'id' });
+    }
+
+    static async countDocuments(query = {}) {
+        let builder = supabase.from('orders').select('id', { count: 'exact', head: true });
+        if (query.orderStatus) builder = builder.eq('order_status', query.orderStatus);
+        if (query.isArchived !== undefined) builder = builder.eq('is_archived', query.isArchived);
+        if (query.user) builder = builder.eq('user_id', query.user);
+        const { count, error } = await builder;
+        if (error) throw error;
+        return count || 0;
+    }
+
+    static async updateMany(filter, update) {
+        let builder = supabase.from('orders').update(update);
+        if (filter.isArchived !== undefined && filter.isArchived.$ne !== undefined) {
+            builder = builder.eq('is_archived', !filter.isArchived.$ne);
+        }
+        if (filter._id && filter._id.$in) {
+            builder = builder.in('id', filter._id.$in);
+        }
+        const { error } = await builder;
+        if (error) throw error;
+    }
+
+    static async deleteMany(filter) {
+        let builder = supabase.from('orders').delete();
+        if (filter._id && filter._id.$in) {
+            builder = builder.in('id', filter._id.$in);
+        }
+        const { error } = await builder;
+        if (error) throw error;
     }
 }
 

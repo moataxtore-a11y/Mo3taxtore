@@ -1,4 +1,5 @@
 const { supabase } = require('../config/db');
+const { createChainable, createSingleChainable } = require('../utils/queryHelpers');
 
 const mapReviewFromPg = (data) => {
     if (!data) return null;
@@ -15,16 +16,19 @@ const mapReviewFromPg = (data) => {
 };
 
 class Review {
-    static async find(query = {}) {
-        let builder = supabase.from('reviews').select('*');
-        if (query.book) builder = builder.eq('book_id', query.book);
-        if (query.user) builder = builder.eq('user_id', query.user);
+    static find(query = {}) {
+        return createChainable(async () => {
+            let builder = supabase.from('reviews').select('*');
+            if (query.book) builder = builder.eq('book_id', query.book);
+            if (query.user) builder = builder.eq('user_id', query.user);
+            if (query.bookId) builder = builder.eq('book_id', query.bookId);
 
-        builder = builder.order('created_at', { ascending: false });
+            builder = builder.order('created_at', { ascending: false });
 
-        const { data, error } = await builder;
-        if (error) throw error;
-        return (data || []).map(mapReviewFromPg);
+            const { data, error } = await builder;
+            if (error) throw error;
+            return (data || []).map(mapReviewFromPg);
+        });
     }
 
     static async findOne(query) {

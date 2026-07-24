@@ -1,4 +1,5 @@
 const { supabase } = require('../config/db');
+const { createChainable, createSingleChainable } = require('../utils/queryHelpers');
 
 const mapBookFromPg = (data) => {
     if (!data) return null;
@@ -35,7 +36,7 @@ const mapBookToPg = (data) => {
     if (data.description !== undefined) pg.description = data.description;
     if (data.price !== undefined) pg.price = data.price;
     if (data.discount !== undefined) pg.discount = data.discount;
-    
+
     // Auto-calculate price after discount
     const price = data.price !== undefined ? Number(data.price) : undefined;
     const discount = data.discount !== undefined ? Number(data.discount) : undefined;
@@ -67,32 +68,35 @@ const mapBookToPg = (data) => {
 };
 
 class Book {
-    static async find(query = {}) {
-        let builder = supabase.from('books').select('*');
-        if (query.status) builder = builder.eq('status', query.status);
-        if (query.category) builder = builder.eq('category', query.category);
-        if (query.teacher) builder = builder.eq('teacher_id', query.teacher);
-        if (query.isStoreProduct !== undefined) builder = builder.eq('is_store_product', query.isStoreProduct);
-        if (query.grade) builder = builder.eq('grade', query.grade);
-        if (query._id && Array.isArray(query._id.$in)) builder = builder.in('id', query._id.$in);
-
-        // Search query
-        if (query.$or) {
-            const titleSearch = query.$or.find(o => o.title)?.$regex;
-            if (titleSearch) {
-                builder = builder.ilike('title', `%${titleSearch}%`);
+    static find(query = {}) {
+        return createChainable(async () => {
+            let builder = supabase.from('books').select('*');
+            if (query.status) builder = builder.eq('status', query.status);
+            if (query.category) builder = builder.eq('category', query.category);
+            if (query.teacher) builder = builder.eq('teacher_id', query.teacher);
+        if (query.isStoreProduct !== undefined) {
+            if (typeof query.isStoreProduct === 'object' && query.isStoreProduct.$ne !== undefined) {
+                builder = builder.neq('is_store_product', query.isStoreProduct.$ne);
+            } else {
+                builder = builder.eq('is_store_product', query.isStoreProduct);
             }
         }
+            if (query.grade) builder = builder.eq('grade', query.grade);
+            if (query._id && Array.isArray(query._id.$in)) builder = builder.in('id', query._id.$in);
 
-        builder = builder.order('created_at', { ascending: false });
+            if (query.$or) {
+                const titleSearch = query.$or.find(o => o.title)?.$regex;
+                if (titleSearch) {
+                    builder = builder.ilike('title', `%${titleSearch}%`);
+                }
+            }
 
-        const { data, error } = await builder;
-        if (error) throw error;
-        const mapped = (data || []).map(mapBookFromPg);
+            builder = builder.order('created_at', { ascending: false });
 
-        // Allow chain helper .lean()
-        mapped.lean = function() { return this; };
-        return mapped;
+            const { data, error } = await builder;
+            if (error) throw error;
+            return (data || []).map(mapBookFromPg);
+        });
     }
 
     static async findById(id) {
@@ -100,7 +104,6 @@ class Book {
         const { data, error } = await supabase.from('books').select('*').eq('id', id).maybeSingle();
         if (error) throw error;
         const book = mapBookFromPg(data);
-        if (book) book.populate = async function() { return this; };
         return book;
     }
 
@@ -138,7 +141,13 @@ class Book {
     static async countDocuments(query = {}) {
         let builder = supabase.from('books').select('id', { count: 'exact', head: true });
         if (query.status) builder = builder.eq('status', query.status);
-        if (query.isStoreProduct !== undefined) builder = builder.eq('is_store_product', query.isStoreProduct);
+        if (query.isStoreProduct !== undefined) {
+            if (typeof query.isStoreProduct === 'object' && query.isStoreProduct.$ne !== undefined) {
+                builder = builder.neq('is_store_product', query.isStoreProduct.$ne);
+            } else {
+                builder = builder.eq('is_store_product', query.isStoreProduct);
+            }
+        }
         const { count, error } = await builder;
         if (error) throw error;
         return count || 0;

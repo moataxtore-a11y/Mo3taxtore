@@ -26,8 +26,7 @@ exports.getAdminAnnouncements = async (req, res) => {
 // @route   POST /api/announcements
 exports.createAnnouncement = async (req, res) => {
     try {
-        const announcement = new Announcement(req.body);
-        await announcement.save();
+        const announcement = await Announcement.create(req.body);
         res.status(201).json(announcement);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -53,7 +52,7 @@ exports.toggleAnnouncement = async (req, res) => {
         const announcement = await Announcement.findById(req.params.id);
         if (!announcement) return res.status(404).json({ message: 'Not found' });
         announcement.isActive = !announcement.isActive;
-        await announcement.save();
+        await Announcement.findByIdAndUpdate(req.params.id, { isActive: announcement.isActive });
         res.json(announcement);
     } catch (err) {
         res.status(400).json({ message: err.message });

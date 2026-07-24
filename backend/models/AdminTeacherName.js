@@ -1,4 +1,5 @@
 const { supabase } = require('../config/db');
+const { createChainable, createSingleChainable } = require('../utils/queryHelpers');
 
 const mapAdminTeacherFromPg = (data) => {
     if (!data) return null;
@@ -13,11 +14,13 @@ const mapAdminTeacherFromPg = (data) => {
 };
 
 class AdminTeacherName {
-    static async find(query = {}) {
-        let builder = supabase.from('admin_teacher_names').select('*').order('name', { ascending: true });
-        const { data, error } = await builder;
-        if (error) throw error;
-        return (data || []).map(mapAdminTeacherFromPg);
+    static find(query = {}) {
+        return createChainable(async () => {
+            let builder = supabase.from('admin_teacher_names').select('*').order('name', { ascending: true });
+            const { data, error } = await builder;
+            if (error) throw error;
+            return (data || []).map(mapAdminTeacherFromPg);
+        });
     }
 
     static async findOne(query) {

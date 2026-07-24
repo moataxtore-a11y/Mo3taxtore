@@ -1,4 +1,5 @@
 const { supabase } = require('../config/db');
+const { createChainable, createSingleChainable } = require('../utils/queryHelpers');
 
 const mapCategoryFromPg = (data) => {
     if (!data) return null;
@@ -30,23 +31,25 @@ const mapCategoryToPg = (data) => {
 };
 
 class Category {
-    static async find(query = {}) {
-        let builder = supabase.from('categories').select('*');
-        if (query.isActive !== undefined) builder = builder.eq('is_active', query.isActive);
-        if (query.categoryType) builder = builder.eq('category_type', query.categoryType);
+    static find(query = {}) {
+        return createChainable(async () => {
+            let builder = supabase.from('categories').select('*');
+            if (query.isActive !== undefined) builder = builder.eq('is_active', query.isActive);
+            if (query.categoryType) builder = builder.eq('category_type', query.categoryType);
 
-        builder = builder.order('order_num', { ascending: true }).order('created_at', { ascending: false });
+            builder = builder.order('order_num', { ascending: true }).order('created_at', { ascending: false });
 
-        const { data, error } = await builder;
-        if (error) throw error;
-        return (data || []).map(mapCategoryFromPg);
+            const { data, error } = await builder;
+            if (error) throw error;
+            return (data || []).map(mapCategoryFromPg);
+        });
     }
 
     static async findById(id) {
         if (!id) return null;
         const { data, error } = await supabase.from('categories').select('*').eq('id', id).maybeSingle();
         if (error) throw error;
-        return mapCategoryFromPg(data);
+        return withChainSingle(mapCategoryFromPg(data), { table: 'categories', idField: 'id' });
     }
 
     static async findOne(query) {
@@ -57,7 +60,7 @@ class Category {
 
         const { data, error } = await builder.maybeSingle();
         if (error) throw error;
-        return mapCategoryFromPg(data);
+        return withChainSingle(mapCategoryFromPg(data), { table: 'categories', idField: 'id' });
     }
 
     static async create(categoryData) {

@@ -116,13 +116,9 @@ exports.getAllCmsContent = async(req, res) => {
 // Get Best Sellers Books
 exports.getBestSellers = async(req, res) => {
     try {
-        // Find top 10 books by totalSold
-        const books = await Book.find({ status: 'approved', isStoreProduct: false })
-            .sort({ totalSold: -1 })
-            .limit(10)
-            .populate('teacher', 'name');
-
-        res.json({ books });
+        const books = await Book.find({ status: 'approved', isStoreProduct: false });
+        books.sort((a, b) => (b.totalSold || 0) - (a.totalSold || 0));
+        res.json({ books: books.slice(0, 10) });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });

@@ -1,4 +1,5 @@
 const { supabase } = require('../config/db');
+const { createChainable, createSingleChainable } = require('../utils/queryHelpers');
 
 const mapAnnouncementFromPg = (data) => {
     if (!data) return null;
@@ -17,21 +18,23 @@ const mapAnnouncementFromPg = (data) => {
 };
 
 class Announcement {
-    static async find(query = {}) {
-        let builder = supabase.from('announcements').select('*');
-        if (query.isActive !== undefined) builder = builder.eq('is_active', query.isActive);
-        builder = builder.order('priority', { ascending: false }).order('created_at', { ascending: false });
+    static find(query = {}) {
+        return createChainable(async () => {
+            let builder = supabase.from('announcements').select('*');
+            if (query.isActive !== undefined) builder = builder.eq('is_active', query.isActive);
+            builder = builder.order('priority', { ascending: false }).order('created_at', { ascending: false });
 
-        const { data, error } = await builder;
-        if (error) throw error;
-        return (data || []).map(mapAnnouncementFromPg);
+            const { data, error } = await builder;
+            if (error) throw error;
+            return (data || []).map(mapAnnouncementFromPg);
+        });
     }
 
     static async findById(id) {
         if (!id) return null;
         const { data, error } = await supabase.from('announcements').select('*').eq('id', id).maybeSingle();
         if (error) throw error;
-        return mapAnnouncementFromPg(data);
+        return withChainSingle(mapAnnouncementFromPg(data), { table: 'announcements', idField: 'id' });
     }
 
     static async create(ancData) {
@@ -45,7 +48,7 @@ class Announcement {
         };
         const { data, error } = await supabase.from('announcements').insert(payload).select().single();
         if (error) throw error;
-        return mapAnnouncementFromPg(data);
+        return withChainSingle(mapAnnouncementFromPg(data), { table: 'announcements', idField: 'id' });
     }
 
     static async findByIdAndUpdate(id, updateData, options = {}) {

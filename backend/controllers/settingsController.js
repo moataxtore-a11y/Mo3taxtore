@@ -16,50 +16,52 @@ exports.getShippingSettings = async(req, res) => {
         let isNew = false;
 
         if (!settings) {
-            settings = new ShippingSettings({
+            settings = await ShippingSettings.findOneAndUpdate({}, {
                 freeShippingThreshold: 500,
                 governorates: [],
-            });
+            }, { upsert: true });
             isNew = true;
         }
 
         // Sync missing default governorates
         let updated = false;
+        let governorates = settings.governorates || [];
 
         const englishNames = ['Cairo', 'Giza', 'Alexandria'];
-        if (settings.governorates.some(g => englishNames.includes(g.name))) {
-            settings.governorates = settings.governorates.filter(g => !englishNames.includes(g.name));
+        if (governorates.some(g => englishNames.includes(g.name))) {
+            governorates = governorates.filter(g => !englishNames.includes(g.name));
             updated = true;
         }
 
         defaultGovernorates.forEach((govName) => {
-            const exists = settings.governorates.find((g) => g.name === govName);
+            const exists = governorates.find((g) => g.name === govName);
             if (!exists) {
-                settings.governorates.push({ name: govName, price: 30 }); // default price
+                governorates.push({ name: govName, price: 30 }); // default price
                 updated = true;
             }
         });
 
         // De-duplicate governorates by name (safety against historical bad data)
-        if (settings.governorates && settings.governorates.length) {
+        if (governorates.length) {
             const seen = new Set();
             const deduped = [];
-            settings.governorates.forEach((g) => {
+            governorates.forEach((g) => {
                 const name = ((g && g.name) || '').trim();
                 if (!name || seen.has(name)) return;
                 seen.add(name);
                 deduped.push({ name, price: Number(g && g.price) || 0 });
             });
 
-            if (deduped.length !== settings.governorates.length) {
-                settings.governorates = deduped;
+            if (deduped.length !== governorates.length) {
+                governorates = deduped;
                 updated = true;
             }
         }
 
         if (isNew || updated) {
-            settings.markModified('governorates');
-            await settings.save();
+            settings = await ShippingSettings.findOneAndUpdate({}, {
+                governorates,
+            });
         }
 
         res.json({ settings });
@@ -74,20 +76,16 @@ exports.getShippingSettings = async(req, res) => {
 exports.updateShippingSettings = async(req, res) => {
     try {
         const { freeShippingThreshold, governorates } = req.body;
-        let settings = await ShippingSettings.findOne();
-
-        if (!settings) {
-            settings = new ShippingSettings();
-        }
+        const updateData = {};
 
         if (freeShippingThreshold !== undefined) {
-            settings.freeShippingThreshold = freeShippingThreshold;
+            updateData.freeShippingThreshold = freeShippingThreshold;
         }
         if (governorates && Array.isArray(governorates)) {
-            settings.governorates = governorates;
+            updateData.governorates = governorates;
         }
 
-        await settings.save();
+        let settings = await ShippingSettings.findOneAndUpdate({}, updateData);
         res.json({ settings, message: 'Settings updated successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });

@@ -1,4 +1,5 @@
 const { supabase } = require('../config/db');
+const { createChainable, createSingleChainable } = require('../utils/queryHelpers');
 const bcrypt = require('bcryptjs');
 
 let bcryptInst;
@@ -93,15 +94,17 @@ class User {
         return userObj;
     }
 
-    static async find(query = {}) {
-        let builder = supabase.from('users').select('*');
-        if (query.role) builder = builder.eq('role', query.role);
-        if (query._id && Array.isArray(query._id.$in)) builder = builder.in('id', query._id.$in);
-        builder = builder.order('created_at', { ascending: false });
+    static find(query = {}) {
+        return createChainable(async () => {
+            let builder = supabase.from('users').select('*');
+            if (query.role) builder = builder.eq('role', query.role);
+            if (query._id && Array.isArray(query._id.$in)) builder = builder.in('id', query._id.$in);
+            builder = builder.order('created_at', { ascending: false });
 
-        const { data, error } = await builder;
-        if (error) throw error;
-        return (data || []).map(mapUserFromPg);
+            const { data, error } = await builder;
+            if (error) throw error;
+            return (data || []).map(mapUserFromPg);
+        });
     }
 
     static async create(userData) {

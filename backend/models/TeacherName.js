@@ -1,4 +1,5 @@
 const { supabase } = require('../config/db');
+const { createChainable, createSingleChainable } = require('../utils/queryHelpers');
 
 const mapTeacherNameFromPg = (data) => {
     if (!data) return null;
@@ -13,14 +14,16 @@ const mapTeacherNameFromPg = (data) => {
 };
 
 class TeacherName {
-    static async find(query = {}) {
-        let builder = supabase.from('teacher_names').select('*');
-        if (query.owner) builder = builder.eq('owner_id', query.owner);
-        builder = builder.order('created_at', { ascending: false });
+    static find(query = {}) {
+        return createChainable(async () => {
+            let builder = supabase.from('teacher_names').select('*');
+            if (query.owner) builder = builder.eq('owner_id', query.owner);
+            builder = builder.order('created_at', { ascending: false });
 
-        const { data, error } = await builder;
-        if (error) throw error;
-        return (data || []).map(mapTeacherNameFromPg);
+            const { data, error } = await builder;
+            if (error) throw error;
+            return (data || []).map(mapTeacherNameFromPg);
+        });
     }
 
     static async findOne(query) {
@@ -29,7 +32,7 @@ class TeacherName {
         if (query.name) builder = builder.eq('name', query.name.trim());
         const { data, error } = await builder.maybeSingle();
         if (error) throw error;
-        return mapTeacherNameFromPg(data);
+        return withChainSingle(mapTeacherNameFromPg(data), { table: 'teacher_names', idField: 'id' });
     }
 
     static async create(tnData) {

@@ -27,7 +27,7 @@ const protect = async (req, res, next) => {
 
     // Asynchronously update lastActive without blocking the request (buffer 60 seconds)
     if (!user.lastActive || Date.now() - new Date(user.lastActive).getTime() > 60000) {
-      User.updateOne({ _id: user._id }, { lastActive: new Date() }).exec().catch(err => console.error('Error updating lastActive:', err));
+      User.findByIdAndUpdate(user._id, { lastActive: new Date() }).catch(err => console.error('Error updating lastActive:', err));
     }
 
     next();
