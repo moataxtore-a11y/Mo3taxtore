@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 let compression;
@@ -174,9 +175,14 @@ app.get('/sw.js', (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(path.join(publicDir, 'sw.js'));
 });
-// SPA fallback: any non-API route returns index.html
+// SPA fallback: any non-API route returns index.html if built
 app.get(/^(?!\/api\/).*/, (req, res) => {
-    res.sendFile(path.join(publicDir, 'index.html'));
+    const indexPath = path.join(publicDir, 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).json({ message: 'Frontend build not found on API server. Please use Vite dev server (http://localhost:5173) or build frontend.' });
+    }
 });
 
 // Ignore common browser noise
