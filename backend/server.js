@@ -124,17 +124,31 @@ app.use('/api/auth/login', loginLimiter);
 app.use('/api/auth/register', loginLimiter);
 
 // CORS
-const defaultOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5000',
+    'https://moataxtore.vercel.app',
+];
+if (process.env.CLIENT_URL) {
+    allowedOrigins.push(process.env.CLIENT_URL);
+}
+
 app.use(cors({
     origin: (origin, callback) => {
-        // In development, allow any origin form local network or tools
+        // Allow requests with no origin (like mobile apps, curl, or same-origin serverless)
         if (!origin || process.env.NODE_ENV !== 'production') {
             return callback(null, true);
         }
-        if (defaultOrigins.indexOf(origin) !== -1 || origin === process.env.CLIENT_URL) {
+        if (allowedOrigins.indexOf(origin) !== -1) {
             return callback(null, true);
         }
-        callback(new Error('Not allowed by CORS'));
+        // Allow any Vercel deployment domain (moataxtore.vercel.app / preview URLs)
+        if (/\.vercel\.app$/.test(origin)) {
+            return callback(null, true);
+        }
+        console.warn(`CORS blocked request from origin: ${origin}`);
+        callback(null, false);
     },
     credentials: true,
 }));
