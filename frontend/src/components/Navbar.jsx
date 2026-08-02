@@ -21,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import api from '../services/api';
 import logo from '../assets/LOGO.svg';
+import CompanyCredit from './CompanyCredit';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -304,6 +305,9 @@ const Navbar = () => {
                 <button onClick={() => { logout(); setMobileMenuOpen(false); navigate('/'); }} className="flex items-center justify-center gap-3 bg-red-50 hover:bg-red-100 py-3.5 mt-2 rounded-2xl w-full font-black text-red-500 text-xs transition-all">
                   <FiLogOut className="w-4 h-4" /> تسجيل الخروج
                 </button>
+                <div className="mt-3 pt-3 border-[#31605f]/15 dark:border-white/10 border-t text-center">
+                  <CompanyCredit className="text-[#5F7A79] hover:text-[#31605F] dark:text-slate-300 dark:hover:text-white text-[10px] font-medium" />
+                </div>
               </div>
             </motion.div>
           )}

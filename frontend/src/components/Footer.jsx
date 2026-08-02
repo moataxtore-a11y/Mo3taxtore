@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import logo from '../assets/LOGO.svg';
 import footerSvg from '../assets/footer.svg';
+import CompanyCredit from './CompanyCredit';
 
 const Footer = () => {
   const [footerSettings, setFooterSettings] = useState({
@@ -119,30 +120,12 @@ const Footer = () => {
         <div className="bg-gradient-to-r from-transparent via-[#8FA7A6]/30 to-transparent mb-8 w-full max-w-lg h-px" />
 
         {/* Copyright and Credits */}
-        {/* Copyright and Credits */}
         <div className="flex md:flex-row flex-col items-center gap-3 mb-2 text-[#5F7A79] text-sm font-medium">
           <div className="flex items-center gap-2">
             جميع الحقوق محفوظة | معتز ستور © {new Date().getFullYear()}
           </div>
           <div className="hidden md:block bg-[#8FA7A6] rounded-full w-1.5 h-1.5" />
-          <div className="flex items-center gap-1">
-            تم التطوير بواسطة
-            <a
-              href={normalizeLink(footerSettings.developerLink)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#31605F] font-bold hover:underline transition-all"
-              onClick={(e) => {
-                const link = normalizeLink(footerSettings.developerLink);
-                if (link && link !== '#') {
-                  window.open(link, '_blank');
-                  e.preventDefault();
-                }
-              }}
-            >
-              {footerSettings.developerName || 'Moataz'}
-            </a>
-          </div>
+          <CompanyCredit className="font-bold text-[#31605F] hover:text-[#244948] dark:text-[#b7dad7] dark:hover:text-white" />
         </div>
 
       </div>
