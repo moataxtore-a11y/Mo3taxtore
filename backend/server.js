@@ -33,6 +33,9 @@ const announcementRoutes = require('./routes/announcementRoutes');
 
 const app = express();
 
+// Trust proxy for Vercel / reverse proxy environments
+app.set('trust proxy', 1);
+
 // Compression (Gzip/Brotli)
 if (compression) {
     app.use(compression());
@@ -92,6 +95,7 @@ const limiter = rateLimit({
     message: { message: 'طلبات كثيرة جداً، حاول مرة أخرى لاحقاً.' },
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { trustProxy: false },
 });
 app.use('/api/', limiter);
 
@@ -102,6 +106,7 @@ const authLimiter = rateLimit({
     message: { message: 'محاولات كثيرة جداً، حاول مرة أخرى بعد 15 دقيقة.' },
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { trustProxy: false },
 });
 app.use('/api/auth/', authLimiter);
 
@@ -113,6 +118,7 @@ const loginLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: true, // Only count failed attempts
+    validate: { trustProxy: false },
 });
 app.use('/api/auth/login', loginLimiter);
 app.use('/api/auth/register', loginLimiter);
