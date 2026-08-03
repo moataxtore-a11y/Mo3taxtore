@@ -18,38 +18,41 @@ exports.createUser = async(req, res) => {
         if (!password || password.length < 6) {
             return res.status(400).json({ message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' });
         }
-        if (!phone || !phone.trim()) {
-            return res.status(400).json({ message: 'رقم الهاتف مطلوب' });
+        const phoneClean = phone ? phone.trim() : '';
+        const phoneRegex = /^\d{11}$/;
+        if (!phoneClean || !phoneRegex.test(phoneClean)) {
+            return res.status(400).json({ message: 'رقم الهاتف يجب أن يتكون من 11 رقم بالضبط' });
         }
 
-        // If email is empty string, make it undefined so Mongoose 'sparse' index ignores it
+        // Email validation if provided
         let finalEmail = email ? email.toLowerCase().trim() : undefined;
-
-        // Check for duplicates before attempting create
         if (finalEmail) {
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(finalEmail)) {
+                return res.status(400).json({ message: 'البريد الإلكتروني غير صحيح (مثال: user@gmail.com)' });
+            }
             const existingEmail = await User.findOne({ email: finalEmail });
             if (existingEmail) {
                 return res.status(400).json({ message: 'البريد الإلكتروني مستخدم بالفعل' });
             }
         }
-        const existingPhone = await User.findOne({ phone: phone.trim() });
+
+        const existingPhone = await User.findOne({ phone: phoneClean });
         if (existingPhone) {
             return res.status(400).json({ message: 'رقم الهاتف مستخدم بالفعل' });
         }
 
-        const user = await User.create({ name: name.trim(), email: finalEmail, password, role, phone: phone.trim() });
+        const user = await User.create({ name: name.trim(), email: finalEmail, password, role, phone: phoneClean });
         res.status(201).json({ message: 'تم إنشاء الحساب بنجاح', user });
     } catch (error) {
         console.error('[createUser] ERROR name:', error.name);
         console.error('[createUser] ERROR code:', error.code);
         console.error('[createUser] ERROR message:', error.message);
         console.error('[createUser] ERROR stack:', error.stack);
-        // Handle Mongoose validation errors gracefully
         if (error.name === 'ValidationError') {
             const messages = Object.values(error.errors).map(e => e.message);
             return res.status(400).json({ message: messages.join(', ') });
         }
-        // Handle duplicate key errors (unique index violation)
         if (error.code === 11000) {
             const field = Object.keys(error.keyPattern || {})[0];
             if (field === 'phone') return res.status(400).json({ message: 'رقم الهاتف مستخدم بالفعل' });
@@ -57,6 +60,81 @@ exports.createUser = async(req, res) => {
             return res.status(400).json({ message: 'بيانات مكررة - يرجى المراجعة' });
         }
         res.status(500).json({ message: 'خطأ في الخادم', error: error.message });
+    }
+};
+
+// @desc    Update user (Admin)
+// @route   PUT /api/admin/users/:id
+exports.updateUser = async(req, res) => {
+    try {
+        const userId = req.params.id;
+        const { name, email, password, role, phone } = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'المستخدم غير موجود' });
+        }
+
+        const updates = {};
+
+        if (name !== undefined) {
+            if (!name.trim()) {
+                return res.status(400).json({ message: 'الاسم مطلوب' });
+            }
+            updates.name = name.trim();
+        }
+
+        if (phone !== undefined) {
+            const phoneClean = phone.trim();
+            const phoneRegex = /^\d{11}$/;
+            if (!phoneRegex.test(phoneClean)) {
+                return res.status(400).json({ message: 'رقم الهاتف يجب أن يتكون من 11 رقم بالضبط' });
+            }
+            if (phoneClean !== user.phone) {
+                const existingPhone = await User.findOne({ phone: phoneClean });
+                if (existingPhone && (existingPhone._id || existingPhone.id) !== userId) {
+                    return res.status(400).json({ message: 'رقم الهاتف مستخدم بالفعل' });
+                }
+            }
+            updates.phone = phoneClean;
+        }
+
+        if (email !== undefined) {
+            let finalEmail = email ? email.toLowerCase().trim() : undefined;
+            if (finalEmail) {
+                const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                if (!emailRegex.test(finalEmail)) {
+                    return res.status(400).json({ message: 'البريد الإلكتروني غير صحيح (مثال: user@gmail.com)' });
+                }
+                if (finalEmail !== user.email) {
+                    const existingEmail = await User.findOne({ email: finalEmail });
+                    if (existingEmail && (existingEmail._id || existingEmail.id) !== userId) {
+                        return res.status(400).json({ message: 'البريد الإلكتروني مستخدم بالفعل' });
+                    }
+                }
+            }
+            updates.email = finalEmail;
+        }
+
+        if (role !== undefined) {
+            updates.role = role;
+        }
+
+        if (password && password.trim() !== '') {
+            if (password.length < 6) {
+                return res.status(400).json({ message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' });
+            }
+            updates.password = password;
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(userId, updates, { new: true });
+        res.json({ message: 'تم تحديث بيانات المستخدم بنجاح', user: updatedUser });
+    } catch (error) {
+        console.error('updateUser Error:', error);
+        if (error.code === 11000) {
+            return res.status(400).json({ message: 'رقم الهاتف أو البريد مستخدم بالفعل' });
+        }
+        res.status(500).json({ message: error.message || 'خطأ في الخادم أثناء تحديث المستخدم' });
     }
 };
 

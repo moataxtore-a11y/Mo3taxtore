@@ -16,10 +16,12 @@ exports.register = async(req, res) => {
     try {
         const { name, password, role, phone, grade } = req.body;
 
-        // SECURITY: Never allow admin registration via public API
-        const safeRole = (role === 'teacher') ? 'teacher' : 'student';
+        const phoneClean = phone ? phone.trim() : '';
+        if (!/^\d{11}$/.test(phoneClean)) {
+            return res.status(400).json({ message: 'رقم الهاتف يجب أن يتكون من 11 رقم بالضبط' });
+        }
 
-        const existingUser = await User.findOne({ phone });
+        const existingUser = await User.findOne({ phone: phoneClean });
         if (existingUser) {
             return res.status(400).json({ message: 'هذا الرقم مسجل بالفعل' });
         }

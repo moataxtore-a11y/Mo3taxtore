@@ -32,8 +32,8 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.phone.length < 10 || formData.phone.length > 15) {
-      return toast.error('رقم الهاتف يجب أن يكون بين 10 إلى 15 رقم');
+    if (formData.phone.length !== 11) {
+      return toast.error('رقم الهاتف يجب أن يكون 11 رقم بالضبط');
     }
     if (formData.phone !== formData.confirmPhone) {
       return toast.error('رقم الهاتف غير متطابق');
@@ -135,7 +135,7 @@ const RegisterPage = () => {
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })}
                   placeholder="رقم الهاتف"
                   className="bg-white/80 backdrop-blur-sm py-4 pr-12 pl-4 border border-white/60 focus:border-[#31605F]/40 rounded-2xl outline-none focus:ring-4 focus:ring-[#31605F]/10 w-full text-[#1E2F2E] placeholder:text-[#8FA7A6] font-medium shadow-sm hover:shadow-md transition-all text-right"
-                  maxLength={15}
+                  maxLength={11}
                   required
                 />
               </div>
@@ -150,7 +150,7 @@ const RegisterPage = () => {
                   onChange={(e) => setFormData({ ...formData, confirmPhone: e.target.value.replace(/\D/g, '') })}
                   placeholder="تأكيد رقم الهاتف"
                   className="bg-white/80 backdrop-blur-sm py-4 pr-12 pl-4 border border-white/60 focus:border-[#31605F]/40 rounded-2xl outline-none focus:ring-4 focus:ring-[#31605F]/10 w-full text-[#1E2F2E] placeholder:text-[#8FA7A6] font-medium shadow-sm hover:shadow-md transition-all text-right"
-                  maxLength={15}
+                  maxLength={11}
                   required
                 />
               </div>

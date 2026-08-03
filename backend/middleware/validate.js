@@ -20,10 +20,13 @@ const validate = (schema) => {
 // Validation schemas
 const registerSchema = Joi.object({
     name: Joi.string().min(2).max(50).required(),
+    email: Joi.string().email().optional().allow('').messages({
+        'string.email': 'البريد الإلكتروني غير صحيح'
+    }),
     password: Joi.string().min(6).max(128).required(),
     role: Joi.string().valid('student', 'teacher').default('student'),
-    phone: Joi.string().pattern(/^\d{10,15}$/).required().messages({
-        'string.pattern.base': 'رقم الهاتف يجب أن يكون بين 10 إلى 15 رقم',
+    phone: Joi.string().pattern(/^\d{11}$/).required().messages({
+        'string.pattern.base': 'رقم الهاتف يجب أن يتكون من 11 رقم بالضبط',
         'any.required': 'رقم الهاتف مطلوب'
     }),
     grade: Joi.string().optional().allow(''),

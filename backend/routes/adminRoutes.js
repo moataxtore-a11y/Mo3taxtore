@@ -11,6 +11,7 @@ router.use(protect, authorize('admin'));
 router.get('/stats', adminController.getStats);
 router.get('/users', adminController.getUsers);
 router.post('/users', adminController.createUser);
+router.put('/users/:id', adminController.updateUser);
 router.get('/users/:id', adminController.getUser);
 router.delete('/users/:id', adminController.deleteUser);
 router.get('/books', adminController.getAllBooks);

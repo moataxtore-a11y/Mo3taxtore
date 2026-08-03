@@ -305,6 +305,7 @@ const AdminDashboard = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [formLoading, setFormLoading] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'admin', phone: '' });
   const [categories, setCategories] = useState([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -818,20 +819,57 @@ const AdminDashboard = () => {
   };
 
   const openUserModal = () => {
+    setEditingUser(null);
     setUserForm({ name: '', email: '', password: '', role: 'admin', phone: '' });
+    setShowUserModal(true);
+  };
+
+  const openEditUserModal = (userData) => {
+    setEditingUser(userData);
+    setUserForm({
+      name: userData.name || '',
+      email: userData.email || '',
+      password: '',
+      role: userData.role || 'student',
+      phone: userData.phone || ''
+    });
     setShowUserModal(true);
   };
 
   const handleUserSubmit = async (e) => {
     e.preventDefault();
+
+    const cleanPhone = (userForm.phone || '').trim();
+    if (!cleanPhone || cleanPhone.length !== 11 || !/^\d{11}$/.test(cleanPhone)) {
+      return toast.error('رقم الهاتف يجب أن يتكون من 11 رقم بالضبط');
+    }
+
+    const cleanEmail = (userForm.email || '').trim();
+    if (cleanEmail) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(cleanEmail)) {
+        return toast.error('البريد الإلكتروني غير صحيح (مثال: user@gmail.com)');
+      }
+    }
+
+    if (!editingUser && (!userForm.password || userForm.password.length < 6)) {
+      return toast.error('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+    }
+
     setFormLoading(true);
     try {
-      await api.post('/admin/users', userForm);
-      toast.success('تم إنشاء الحساب بنجاح');
+      if (editingUser) {
+        await api.put(`/admin/users/${editingUser._id}`, userForm);
+        toast.success('تم تحديث بيانات المستخدم بنجاح');
+      } else {
+        await api.post('/admin/users', userForm);
+        toast.success('تم إنشاء الحساب بنجاح');
+      }
       setShowUserModal(false);
-      fetchAll();
+      setEditingUser(null);
+      fetchUsers();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'حدث خطأ');
+      toast.error(err.response?.data?.message || 'حدث خطأ أثناء حفظ المستخدم');
     } finally {
       setFormLoading(false);
     }
@@ -1555,16 +1593,28 @@ const AdminDashboard = () => {
                               {new Date(u.createdAt).toLocaleDateString('ar-EG')}
                             </td>
                             <td className="px-10 py-6">
-                              {u._id !== user._id && (
+                              <div className="flex items-center justify-center gap-2">
                                 <motion.button
                                   whileHover={{ scale: 1.1 }}
                                   whileTap={{ scale: 0.9 }}
-                                  onClick={() => handleDeleteUser(u._id)}
-                                  className="flex justify-center items-center bg-red-50 hover:bg-red-500 lg:group-hover:opacity-100 lg:opacity-0 rounded-2xl w-12 h-12 text-red-500 hover:text-white transition-all"
+                                  onClick={() => openEditUserModal(u)}
+                                  className="flex justify-center items-center bg-blue-50 hover:bg-blue-500 rounded-2xl w-10 h-10 text-blue-600 hover:text-white transition-all"
+                                  title="تعديل المستخدم"
                                 >
-                                  <FiTrash2 className="w-5 h-5" />
+                                  <FiEdit className="w-4 h-4" />
                                 </motion.button>
-                              )}
+                                {u._id !== user._id && (
+                                  <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={() => handleDeleteUser(u._id)}
+                                    className="flex justify-center items-center bg-red-50 hover:bg-red-500 rounded-2xl w-10 h-10 text-red-500 hover:text-white transition-all"
+                                    title="حذف المستخدم"
+                                  >
+                                    <FiTrash2 className="w-4 h-4" />
+                                  </motion.button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -1593,9 +1643,12 @@ const AdminDashboard = () => {
                             {u.role === 'admin' ? 'أدمن' : u.role === 'teacher' ? 'مدرس' : 'طالب'}
                           </span>
                         </div>
-                        {u._id !== user._id && (
-                          <button onClick={() => handleDeleteUser(u._id)} className="p-3 bg-red-50 text-red-500 rounded-xl active:scale-95 transition-all"><FiTrash2 className="w-5 h-5" /></button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openEditUserModal(u)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl active:scale-95 transition-all" title="تعديل"><FiEdit className="w-5 h-5" /></button>
+                          {u._id !== user._id && (
+                            <button onClick={() => handleDeleteUser(u._id)} className="p-2.5 bg-red-50 text-red-500 rounded-xl active:scale-95 transition-all" title="حذف"><FiTrash2 className="w-5 h-5" /></button>
+                          )}
+                        </div>
                       </div>
                       <div className="space-y-1.5 pt-3 border-t border-primary/5">
                         <div className="flex items-center gap-2 text-text-secondary text-xs font-bold">
@@ -4166,6 +4219,110 @@ const AdminDashboard = () => {
                     {editingCategory ? 'حفظ التعديلات' : (categoryForm.categoryType === 'store' ? 'إضافة القسم للمتجر الآن' : 'إضافة المادة للمكتبة الآن')}
                   </motion.button>
                 </form>
+              </motion.div>
+            </div>
+          )}
+
+          {showUserModal && (
+            <div key="user-modal" className="z-[999] fixed inset-0 flex justify-center items-center bg-[#1E2F2E]/40 backdrop-blur-md px-4 py-8 overflow-y-auto" onClick={() => { setShowUserModal(false); setEditingUser(null); }}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                className="relative bg-white shadow-2xl border border-white/60 rounded-[3rem] w-full max-w-lg overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center bg-primary/5 px-8 py-6 border-b border-primary/5">
+                  <h2 className="flex items-center gap-3 font-heading font-black text-primary text-xl md:text-2xl">
+                    <div className="flex justify-center items-center bg-primary shadow-md rounded-2xl w-10 h-10 text-white">
+                      <FiUsers className="w-5 h-5" />
+                    </div>
+                    <span>{editingUser ? 'تعديل بيانات المستخدم' : 'إضافة مستخدم جديد'}</span>
+                  </h2>
+                  <button onClick={() => { setShowUserModal(false); setEditingUser(null); }} className="hover:bg-red-50 p-2 rounded-xl text-red-500 transition-all">
+                    <FiX className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="p-8">
+                  <form onSubmit={handleUserSubmit} className="space-y-5">
+                    <div>
+                      <label className="block mb-2 font-black text-text-secondary text-sm uppercase">الاسم الكامل *</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: أحمد محمد"
+                        value={userForm.name}
+                        onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                        className="bg-primary/5 px-6 py-4 border-none rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 w-full font-bold text-text-primary"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block mb-2 font-black text-text-secondary text-sm uppercase">رقم الهاتف (11 رقم) *</label>
+                      <input
+                        type="tel"
+                        placeholder="مثال: 01012345678"
+                        value={userForm.phone}
+                        onChange={(e) => setUserForm({ ...userForm, phone: e.target.value.replace(/\D/g, '') })}
+                        maxLength={11}
+                        className="bg-primary/5 px-6 py-4 border-none rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 w-full font-bold text-text-primary text-left"
+                        required
+                      />
+                      {userForm.phone && userForm.phone.length !== 11 && (
+                        <p className="mt-1 font-bold text-amber-600 text-xs text-right">رقم الهاتف يجب أن يتكون من 11 رقم بالضبط (الحالي: {userForm.phone.length})</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block mb-2 font-black text-text-secondary text-sm uppercase">البريد الإلكتروني (الجيميل)</label>
+                      <input
+                        type="email"
+                        placeholder="مثال: example@gmail.com"
+                        value={userForm.email}
+                        onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                        className="bg-primary/5 px-6 py-4 border-none rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 w-full font-bold text-text-primary text-left"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block mb-2 font-black text-text-secondary text-sm uppercase">الصلاحية *</label>
+                      <CustomSelect
+                        value={userForm.role}
+                        onChange={(val) => setUserForm({ ...userForm, role: val })}
+                        options={[
+                          { label: 'أدمن (مدير)', value: 'admin' },
+                          { label: 'مدرس', value: 'teacher' },
+                          { label: 'طالب', value: 'student' }
+                        ]}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block mb-2 font-black text-text-secondary text-sm uppercase">
+                        كلمة المرور {editingUser ? '(اتركها فارغة إذا لم ترد التغيير)' : '*'}
+                      </label>
+                      <input
+                        type="password"
+                        placeholder={editingUser ? 'أدخل كلمة مرور جديدة للتعيين...' : '6 أحرف على الأقل'}
+                        value={userForm.password}
+                        onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                        className="bg-primary/5 px-6 py-4 border-none rounded-2xl outline-none focus:ring-4 focus:ring-primary/10 w-full font-bold text-text-primary"
+                        required={!editingUser}
+                      />
+                    </div>
+
+                    <motion.button
+                      type="submit"
+                      disabled={formLoading}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="bg-primary disabled:opacity-50 shadow-2xl shadow-primary/30 mt-6 py-5 rounded-[2rem] w-full font-black text-white text-lg"
+                    >
+                      {formLoading ? 'جاري الحفظ...' : (editingUser ? 'حفظ التعديلات' : 'إنشاء الحساب الآن')}
+                    </motion.button>
+                  </form>
+                </div>
               </motion.div>
             </div>
           )}
