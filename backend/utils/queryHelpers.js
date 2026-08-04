@@ -18,15 +18,36 @@ function createChainable(queryFn) {
                     let arr = [...result];
                     if (chain._sortArg !== null) {
                         const sortArg = chain._sortArg;
+                        let key, dir = 1;
                         if (typeof sortArg === 'string') {
-                            arr.sort((a, b) => ((a[sortArg] || '') + '').localeCompare((b[sortArg] || '') + ''));
+                            key = sortArg.startsWith('-') ? sortArg.slice(1) : sortArg;
+                            dir = sortArg.startsWith('-') ? -1 : 1;
                         } else if (typeof sortArg === 'object' && sortArg !== null) {
-                            const key = Object.keys(sortArg)[0];
-                            const dir = sortArg[key];
+                            key = Object.keys(sortArg)[0];
+                            const val = sortArg[key];
+                            dir = (val === -1 || val === 'desc' || val === 'descending') ? -1 : 1;
+                        }
+                        if (key) {
                             arr.sort((a, b) => {
-                                const va = a[key] instanceof Date ? a[key] : new Date(a[key] || 0);
-                                const vb = b[key] instanceof Date ? b[key] : new Date(b[key] || 0);
-                                return dir === 1 ? va - vb : vb - va;
+                                const va = a ? a[key] : undefined;
+                                const vb = b ? b[key] : undefined;
+                                if (va === vb) return 0;
+                                if (va === undefined || va === null) return 1;
+                                if (vb === undefined || vb === null) return -1;
+
+                                if (typeof va === 'number' && typeof vb === 'number') {
+                                    return dir === 1 ? va - vb : vb - va;
+                                }
+
+                                const da = va instanceof Date ? va : new Date(va);
+                                const db = vb instanceof Date ? vb : new Date(vb);
+                                if (!isNaN(da.getTime()) && !isNaN(db.getTime()) && typeof va !== 'number') {
+                                    return dir === 1 ? da - db : db - da;
+                                }
+
+                                return dir === 1 
+                                    ? String(va).localeCompare(String(vb), 'ar') 
+                                    : String(vb).localeCompare(String(va), 'ar');
                             });
                         }
                     }

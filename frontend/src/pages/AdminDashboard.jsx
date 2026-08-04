@@ -1180,7 +1180,7 @@ const AdminDashboard = () => {
   };
 
 
-  const isAnyModalOpen = showAnnouncementModal || showBookModal || showUserModal || showCouponModal || showOrderModal || showCategoryModal || showDiscountModal || showGradeModal;
+  const isAnyModalOpen = showAnnouncementModal || showBookModal || showUserModal || showCouponModal || showOrderModal || showCategoryModal || showDiscountModal || showGradeModal || confirmConfig.isOpen;
 
   if (loading) return <BookLoader />;
 
@@ -4416,6 +4416,10 @@ const AdminDashboard = () => {
               </motion.div>
             </div>
           )}
+          <ConfirmModal
+            {...confirmConfig}
+            onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+          />
           {/* End of Modals */}
           </AnimatePresence>
         </ModalPortal>
