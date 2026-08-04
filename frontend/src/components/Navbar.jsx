@@ -128,7 +128,7 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed left-0 right-0 z-[100] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex justify-center ${isScrolled ? 'top-4 px-4 lg:px-0' : 'top-0 px-0'
+      className={`fixed left-0 right-0 z-[990] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] flex justify-center ${isScrolled ? 'top-4 px-4 lg:px-0' : 'top-0 px-0'
         }`}
     >
       <div

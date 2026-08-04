@@ -40,7 +40,7 @@ const AnnouncementBanner = () => {
       initial={{ height: 0, opacity: 0 }}
       animate={{ height: 'auto', opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
-      className="relative z-[100] bg-gradient-to-r from-primary-dark via-primary to-primary-dark shadow-lg overflow-hidden"
+      className="relative z-10 bg-gradient-to-r from-primary-dark via-primary to-primary-dark shadow-lg overflow-hidden"
     >
       <div className="mx-auto px-4 max-w-7xl">
         <div className="flex justify-between items-center min-h-[50px] md:min-h-[64px] py-2 md:py-3">
