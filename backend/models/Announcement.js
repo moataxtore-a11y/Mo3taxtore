@@ -1,5 +1,5 @@
 const { supabase } = require('../config/db');
-const { createChainable, createSingleChainable } = require('../utils/queryHelpers');
+const { createChainable, createSingleChainable, withChainSingle } = require('../utils/queryHelpers');
 
 const mapAnnouncementFromPg = (data) => {
     if (!data) return null;

@@ -62,4 +62,14 @@ function createSingleChainable(queryFn) {
     return chain;
 }
 
-module.exports = { createChainable, createSingleChainable };
+// Wraps a single object (or null) so it can be awaited and chained with
+// .select()/.lean() like a Mongoose doc. Keeps the original object intact.
+function withChainSingle(obj) {
+    if (!obj) return null;
+    obj.select = obj.select || function () { return this; };
+    obj.lean = obj.lean || function () { return this; };
+    obj.exec = obj.exec || function () { return this; };
+    return obj;
+}
+
+module.exports = { createChainable, createSingleChainable, withChainSingle };

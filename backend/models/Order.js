@@ -1,6 +1,6 @@
 const { supabase } = require('../config/db');
 const User = require('./User');
-const { createChainable, createSingleChainable } = require('../utils/queryHelpers');
+const { createChainable, createSingleChainable, withChainSingle } = require('../utils/queryHelpers');
 
 const fetchOrderItems = async (orderId) => {
     const { data, error } = await supabase.from('order_items').select('*').eq('order_id', orderId);
