@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import CustomSelect from '../components/CustomSelect';
 import ConfirmModal from '../components/ConfirmModal';
+import ModalPortal from '../components/ModalPortal';
 import Footer from '../components/Footer';
 
 
@@ -588,7 +589,8 @@ const TeacherDashboard = () => {
         )}
 
         {/* Add/Edit Book Modal */}
-        <AnimatePresence>
+        <ModalPortal isOpen={showModal || showOrderModal}>
+          <AnimatePresence>
           {showModal && (
             <div className="z-50 fixed inset-0 flex justify-center items-start bg-black/50 backdrop-blur-sm px-4 py-8 overflow-auto" onClick={() => setShowModal(false)}>
               <motion.div
@@ -868,7 +870,8 @@ const TeacherDashboard = () => {
             {...confirmConfig}
             onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
           />
-        </AnimatePresence>
+          </AnimatePresence>
+        </ModalPortal>
       </div>
       <Footer />
     </div>

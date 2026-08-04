@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import CustomSelect from '../components/CustomSelect';
+import ModalPortal from '../components/ModalPortal';
 
 const GOVERNORATES = [
   'القاهرة', 'الجيزة', 'الإسكندرية', 'الدقهلية', 'الشرقية', 'المنوفية',
@@ -377,6 +378,7 @@ const ProfilePage = () => {
         </div>
 
         {/* Order Tracking Modal */}
+        <ModalPortal isOpen={!!selectedOrder}>
         <AnimatePresence>
           {selectedOrder && (
             <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/40 backdrop-blur-md p-4 overflow-y-auto" onClick={() => setSelectedOrder(null)}>
@@ -473,6 +475,7 @@ const ProfilePage = () => {
             </div>
           )}
         </AnimatePresence>
+        </ModalPortal>
       </div>
     </div>
   );

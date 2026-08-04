@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiAlertTriangle, FiX } from 'react-icons/fi';
+import ModalPortal from './ModalPortal';
 
 const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "تأكيد", cancelText = "إلغاء", type = "danger" }) => {
 
@@ -28,9 +29,10 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
   const activeColors = colors[type] || colors.danger;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+    <ModalPortal isOpen={isOpen}>
+      <AnimatePresence>
+        {isOpen && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -86,6 +88,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
         </div>
       )}
     </AnimatePresence>
+    </ModalPortal>
   );
 };
 

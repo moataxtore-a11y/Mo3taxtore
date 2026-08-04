@@ -6,6 +6,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import BookLoader from '../components/BookLoader';
+import ModalPortal from '../components/ModalPortal';
 import Footer from '../components/Footer';
 
 const ORDER_STATUS_MAP = {
@@ -284,6 +285,7 @@ const StudentDashboard = () => {
       <Footer />
 
       {/* Simplified Review Modal */}
+      <ModalPortal isOpen={showReviewModal || !!cancellingOrder}>
       {showReviewModal && (
         <div className="z-[100] fixed inset-0 flex justify-center items-center bg-black/40 backdrop-blur-sm px-4" onClick={() => setShowReviewModal(false)}>
           <motion.div
@@ -362,6 +364,7 @@ const StudentDashboard = () => {
           </motion.div>
         </div>
       )}
+      </ModalPortal>
     </div>
   );
 };

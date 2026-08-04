@@ -10,6 +10,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { getIcon } from '../utils/icons';
 import { useAuth } from '../context/AuthContext';
 import BookLoader from '../components/BookLoader';
+import ModalPortal from '../components/ModalPortal';
 import logo from '../assets/LOGO.svg';
 
 const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
@@ -1172,6 +1173,8 @@ const AdminDashboard = () => {
     }
   };
 
+
+  const isAnyModalOpen = showAnnouncementModal || showBookModal || showUserModal || showCouponModal || showOrderModal || showCategoryModal || showDiscountModal || showGradeModal;
 
   if (loading) return <BookLoader />;
 
@@ -3451,7 +3454,8 @@ const AdminDashboard = () => {
 
 
         {/* Modals placed globally for better layout */}
-        <AnimatePresence>
+        <ModalPortal isOpen={isAnyModalOpen}>
+          <AnimatePresence>
           {showAnnouncementModal && (
             <div key="announcement-modal" className="z-[999] fixed inset-0 flex justify-center items-center bg-[#1E2F2E]/40 backdrop-blur-md p-4 overflow-y-auto" onClick={() => setShowAnnouncementModal(false)}>
               <motion.div
@@ -4407,7 +4411,8 @@ const AdminDashboard = () => {
             </div>
           )}
           {/* End of Modals */}
-        </AnimatePresence>
+          </AnimatePresence>
+        </ModalPortal>
       </div>
     </div>
   );
