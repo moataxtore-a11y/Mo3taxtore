@@ -1,4 +1,5 @@
 const { supabase } = require('../config/db');
+const { createChainable } = require('../utils/queryHelpers');
 
 const mapGradeFromPg = (data) => {
     if (!data) return null;
@@ -20,14 +21,16 @@ const mapGradeFromPg = (data) => {
 };
 
 class Grade {
-    static async find(query = {}) {
-        let builder = supabase.from('grades').select('*');
-        if (query.isActive !== undefined) builder = builder.eq('is_active', query.isActive);
-        builder = builder.order('order_num', { ascending: true }).order('created_at', { ascending: false });
+    static find(query = {}) {
+        return createChainable(async () => {
+            let builder = supabase.from('grades').select('*');
+            if (query.isActive !== undefined) builder = builder.eq('is_active', query.isActive);
+            builder = builder.order('order_num', { ascending: true }).order('created_at', { ascending: false });
 
-        const { data, error } = await builder;
-        if (error) throw error;
-        return (data || []).map(mapGradeFromPg);
+            const { data, error } = await builder;
+            if (error) throw error;
+            return (data || []).map(mapGradeFromPg);
+        });
     }
 
     static async findOne(query) {
