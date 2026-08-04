@@ -43,3 +43,6 @@ backend/public
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
+.env*
