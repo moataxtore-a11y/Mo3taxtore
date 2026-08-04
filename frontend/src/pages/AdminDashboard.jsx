@@ -241,7 +241,13 @@ const AdminDashboard = () => {
       // PRIORITY 1: Current Tab Data (Blocker)
       if (tabId === 'overview') critical.push(fetchStats());
       else if (tabId === 'users') critical.push(fetchUsers());
-      else if (tabId === 'books' || tabId === 'store_products') critical.push(fetchBooks());
+      else if (tabId === 'books' || tabId === 'store_products') {
+        critical.push(fetchBooks());
+        // The Create/Edit Book modal needs categories, teachers, and grades for its selects
+        if (categories.length === 0) critical.push(fetchCategories());
+        if (teacherNames.length === 0) critical.push(fetchTeacherNames());
+        if (grades.length === 0) critical.push(fetchGrades());
+      }
       else if (tabId === 'orders') critical.push(fetchOrders());
       else if (tabId === 'teacher_names') critical.push(fetchTeacherNames());
       else if (tabId === 'logistics') critical.push(fetchSettings());
