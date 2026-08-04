@@ -1,16 +1,29 @@
 {
     "version": 2,
-    "installCommand": "npm install --prefix backend && npm install --prefix frontend",
-    "buildCommand": "npm run build --prefix frontend",
-    "outputDirectory": "frontend/dist",
-    "rewrites": [
+    "installCommand": "npm run build:vercel",
+    "builds": [
         {
-            "source": "/api/(.*)",
-            "destination": "/api/index.js"
+            "src": "backend/server.js",
+            "use": "@vercel/node",
+            "config": {
+                "includeFiles": [
+                    "backend/public/**"
+                ]
+            }
+        }
+    ],
+    "routes": [
+        {
+            "src": "/api/(.*)",
+            "dest": "backend/server.js"
         },
         {
-            "source": "/((?!api/).*)",
-            "destination": "/index.html"
+            "src": "/uploads/(.*)",
+            "dest": "backend/server.js"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "backend/server.js"
         }
     ]
 }

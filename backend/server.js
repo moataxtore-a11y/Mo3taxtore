@@ -177,10 +177,6 @@ app.use('/api/teachers', teacherRoutes);
 app.use('/api/announcements', announcementRoutes);
 
 // Health check & Welcome
-app.get('/', (req, res) => {
-    res.send('🚀 Moataxtore API is running! Site is on port 5173.');
-});
-
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
