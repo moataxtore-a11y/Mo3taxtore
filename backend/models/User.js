@@ -70,34 +70,38 @@ const mapUserToPg = (data) => {
 };
 
 class User {
-    static async findOne(query, selectFields) {
-        let builder = supabase.from('users').select('*');
-        if (query._id) builder = builder.eq('id', query._id);
-        if (query.email) builder = builder.eq('email', query.email.toLowerCase());
-        if (query.phone) builder = builder.eq('phone', query.phone);
-        if (query.resetPasswordToken) builder = builder.eq('reset_password_token', query.resetPasswordToken);
-        if (query.verificationToken) builder = builder.eq('verification_token', query.verificationToken);
+    static findOne(query, selectFields) {
+        return createSingleChainable(async () => {
+            let builder = supabase.from('users').select('*');
+            if (query._id) builder = builder.eq('id', query._id);
+            if (query.email) builder = builder.eq('email', query.email.toLowerCase());
+            if (query.phone) builder = builder.eq('phone', query.phone);
+            if (query.resetPasswordToken) builder = builder.eq('reset_password_token', query.resetPasswordToken);
+            if (query.verificationToken) builder = builder.eq('verification_token', query.verificationToken);
 
-        const { data, error } = await builder.maybeSingle();
-        if (error) throw error;
-        const userObj = mapUserFromPg(data);
-        if (userObj) {
-            userObj.select = function() { return this; };
-            userObj.lean = function() { return this; };
-        }
-        return userObj;
+            const { data, error } = await builder.maybeSingle();
+            if (error) throw error;
+            const userObj = mapUserFromPg(data);
+            if (userObj) {
+                userObj.select = function() { return this; };
+                userObj.lean = function() { return this; };
+            }
+            return userObj;
+        });
     }
 
-    static async findById(id) {
-        if (!id) return null;
-        const { data, error } = await supabase.from('users').select('*').eq('id', id).maybeSingle();
-        if (error) throw error;
-        const userObj = mapUserFromPg(data);
-        if (userObj) {
-            userObj.select = function() { return this; };
-            userObj.lean = function() { return this; };
-        }
-        return userObj;
+    static findById(id) {
+        return createSingleChainable(async () => {
+            if (!id) return null;
+            const { data, error } = await supabase.from('users').select('*').eq('id', id).maybeSingle();
+            if (error) throw error;
+            const userObj = mapUserFromPg(data);
+            if (userObj) {
+                userObj.select = function() { return this; };
+                userObj.lean = function() { return this; };
+            }
+            return userObj;
+        });
     }
 
     static find(query = {}) {

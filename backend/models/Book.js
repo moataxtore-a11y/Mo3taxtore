@@ -105,21 +105,41 @@ class Book {
         });
     }
 
-    static async findById(id) {
-        if (!id) return null;
-        const { data, error } = await supabase.from('books').select('*').eq('id', id).maybeSingle();
-        if (error) throw error;
-        const book = mapBookFromPg(data);
-        return book;
+    static findById(id) {
+        return createSingleChainable(async () => {
+            if (!id) return null;
+            const { data, error } = await supabase.from('books').select('*').eq('id', id).maybeSingle();
+            if (error) throw error;
+            const book = mapBookFromPg(data);
+            if (!book) return null;
+            if (book.teacher && typeof book.teacher === 'string') {
+                const User = require('./User');
+                const teacherDoc = await User.findById(book.teacher);
+                if (teacherDoc) {
+                    book.teacher = teacherDoc;
+                }
+            }
+            return book;
+        });
     }
 
-    static async findOne(query) {
-        let builder = supabase.from('books').select('*');
-        if (query._id) builder = builder.eq('id', query._id);
-        if (query.isbn) builder = builder.eq('isbn', query.isbn);
-        const { data, error } = await builder.maybeSingle();
-        if (error) throw error;
-        return mapBookFromPg(data);
+    static findOne(query) {
+        return createSingleChainable(async () => {
+            let builder = supabase.from('books').select('*');
+            if (query._id) builder = builder.eq('id', query._id);
+            if (query.isbn) builder = builder.eq('isbn', query.isbn);
+            const { data, error } = await builder.maybeSingle();
+            if (error) throw error;
+            const book = mapBookFromPg(data);
+            if (book && book.teacher && typeof book.teacher === 'string') {
+                const User = require('./User');
+                const teacherDoc = await User.findById(book.teacher);
+                if (teacherDoc) {
+                    book.teacher = teacherDoc;
+                }
+            }
+            return book;
+        });
     }
 
     static async create(bookData) {
