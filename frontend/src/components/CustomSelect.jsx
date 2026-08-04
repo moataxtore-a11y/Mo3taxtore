@@ -3,15 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiChevronDown, FiCheck } from 'react-icons/fi';
 import { createPortal } from 'react-dom';
 
-const CustomSelect = ({ value, onChange, options, placeholder, className = "", disabled = false }) => {
+const CustomSelect = ({ value, onChange, options = [], placeholder, className = "", disabled = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropDirection, setDropDirection] = useState('down');
   const [dropdownPos, setDropdownPos] = useState(null);
   const containerRef = useRef(null);
   const dropdownRef = useRef(null);
 
-  const selectedOption = options.find(opt => opt.value === value || opt === value);
-  const displayLabel = selectedOption?.label || selectedOption || placeholder;
+  const safeOptions = Array.isArray(options) ? options : [];
+  const selectedOption = safeOptions.find(opt => (opt && opt.value !== undefined ? opt.value : opt) === value);
+  const displayLabel = selectedOption?.label || (typeof selectedOption === 'string' ? selectedOption : placeholder);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -76,7 +77,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, className = "", d
         className={`bg-white/80 backdrop-blur-2xl px-6 py-4 border border-white/60 rounded-[2rem] flex items-center justify-between transition-all ${disabled ? 'opacity-60 cursor-not-allowed shadow-none' : 'cursor-pointer hover:shadow-lg'} ${isOpen ? 'ring-4 ring-primary/5 border-primary/40 shadow-xl' : 'shadow-sm hover:border-primary/20'}`}
       >
         <span className={`font-black text-sm transition-colors ${value ? 'text-text-primary' : 'text-text-muted opacity-60'}`}>
-          {displayLabel}
+          {displayLabel || placeholder}
         </span>
         <motion.div
             animate={{ rotate: isOpen ? (dropDirection === 'up' ? -180 : 180) : 0 }}
@@ -103,7 +104,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, className = "", d
                 top: dropDirection === 'up' ? dropdownPos.top - 8 : dropdownPos.bottom + 8,
                 transform: dropDirection === 'up' ? 'translateY(-100%)' : undefined,
               }}
-              className="z-[4000] bg-white/95 shadow-[0_20px_60px_-15px_rgba(49,96,95,0.2)] backdrop-blur-3xl border border-white/80 rounded-[2.5rem] overflow-hidden"
+              className="z-[1000000] bg-white/95 shadow-[0_20px_60px_-15px_rgba(49,96,95,0.2)] backdrop-blur-3xl border border-white/80 rounded-[2.5rem] overflow-hidden"
               dir="rtl"
             >
               <style>
@@ -121,12 +122,13 @@ const CustomSelect = ({ value, onChange, options, placeholder, className = "", d
                   }
                   .custom-select-list::-webkit-scrollbar-thumb:hover {
                     background: rgba(49, 96, 95, 0.25);
-                  }
+                    }
                   `}
               </style>
               <div className="p-3 max-h-72 overflow-y-auto custom-select-list">
-                {options.map((option, index) => {
-                  const optValue = option.value !== undefined ? option.value : option;
+                {safeOptions.map((option, index) => {
+                  const optValue = option && option.value !== undefined ? option.value : option;
+                  const optLabel = option && option.label !== undefined ? option.label : option;
                   const isSelected = optValue === value;
                   return (
                     <motion.div
@@ -142,7 +144,7 @@ const CustomSelect = ({ value, onChange, options, placeholder, className = "", d
                           : 'text-text-secondary hover:text-primary'
                       }`}
                     >
-                      <span>{option.label || option}</span>
+                      <span>{optLabel}</span>
                       {isSelected && (
                           <motion.div 
                               initial={{ scale: 0 }}
