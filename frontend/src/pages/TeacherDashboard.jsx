@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiUpload, FiImage, FiX, FiCheck, FiBook, FiDollarSign, FiPrinter, FiMapPin, FiPackage, FiBarChart2, FiShoppingCart } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiUpload, FiImage, FiX, FiCheck, FiBook, FiDollarSign, FiPrinter, FiMapPin, FiPackage, FiBarChart2, FiShoppingCart, FiEye, FiCalendar } from 'react-icons/fi';
 import { FaChalkboardTeacher } from 'react-icons/fa';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import imageCompression from 'browser-image-compression';
@@ -20,6 +20,7 @@ const TeacherDashboard = () => {
   const navigate = useNavigate();
   const [books, setBooks] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [orderFilter, setOrderFilter] = useState('');
   const [teacherNames, setTeacherNames] = useState([]);
   const [teacherNameInput, setTeacherNameInput] = useState('');
   const [loading, setLoading] = useState(true);
