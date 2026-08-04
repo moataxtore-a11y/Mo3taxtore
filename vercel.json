@@ -18,7 +18,14 @@
       }
     },
     {
-      "source": "/(.*)",
+      "source": "/uploads(/.*)?",
+      "destination": {
+        "type": "service",
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/((?!api|uploads).*)",
       "destination": {
         "type": "service",
         "service": "frontend"
