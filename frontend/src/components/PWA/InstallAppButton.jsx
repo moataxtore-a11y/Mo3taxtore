@@ -49,7 +49,7 @@ const InstallAppButton = () => {
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
-        className="fixed bottom-6 left-6 right-6 md:left-auto md:right-8 md:w-80 z-[100]"
+        className="fixed bottom-24 left-4 right-4 md:bottom-8 md:left-auto md:right-8 md:w-80 z-[100]"
       >
         <div className="bg-white shadow-2xl rounded-[2rem] p-6 border border-primary/10 flex items-center gap-4 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150 duration-700" />
