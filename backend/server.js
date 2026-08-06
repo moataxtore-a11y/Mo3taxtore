@@ -99,7 +99,7 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Strict rate limit for all auth routes
+// Strict rate limit for all auth routes (except heartbeat and me which run frequently)
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: process.env.NODE_ENV === 'production' ? 20 : 100,
@@ -107,6 +107,10 @@ const authLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     validate: { trustProxy: false },
+    skip: (req) => {
+        const path = req.originalUrl || req.url;
+        return path.includes('/auth/me') || path.includes('/auth/heartbeat');
+    }
 });
 app.use('/api/auth/', authLimiter);
 
