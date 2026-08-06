@@ -2093,11 +2093,11 @@ const AdminDashboard = () => {
 
                         {/* Bottom Row: Items and Date */}
                         <div className="flex md:flex-row flex-col justify-between items-start md:items-center gap-4">
-                          <div className="flex flex-wrap justify-start gap-2 max-w-2xl">
+                          <div className="flex flex-wrap justify-start gap-3 max-w-2xl">
                             {order.items.map((item, j) => (
-                              <div key={j} className="flex items-center gap-2 bg-bg/50 shadow-sm backdrop-blur px-3 py-1.5 border border-white/60 rounded-xl hover:scale-105 transition-transform">
-                                <div className="flex justify-center items-center rounded-lg w-6 h-6 font-black text-[9px] text-white gradient-primary shrink-0">{item.quantity}</div>
-                                <span className="font-black text-[10px] text-text-secondary md:text-xs">{item.title}</span>
+                              <div key={j} className="flex items-center gap-3 bg-primary/5 px-4 py-2 border border-primary/10 rounded-2xl hover:bg-primary/10 transition-colors">
+                                <div className="flex justify-center items-center bg-primary shadow-sm rounded-lg w-7 h-7 font-black text-white text-xs shrink-0">{item.quantity}</div>
+                                <span className="font-bold text-text-primary text-xs md:text-sm">{item.title}</span>
                               </div>
                             ))}
                           </div>
@@ -2127,15 +2127,17 @@ const AdminDashboard = () => {
                           />
                         </div>
 
-                        <div className="flex justify-end items-center gap-4 w-full md:w-auto">
-                          <div className="text-left">
-                            <p className="mb-1 font-black text-[9px] text-text-muted md:text-[10px] text-left uppercase">العنوان</p>
-                            <p className="font-black text-text-primary text-xs md:text-sm text-left leading-relaxed">
-                              {order.shippingAddress?.street}, {order.shippingAddress?.city}, {order.shippingAddress?.governorate}
-                            </p>
+                        <div className="flex items-center gap-4 bg-primary/5 px-5 py-3 rounded-2xl border border-primary/10 w-full md:w-auto">
+                          <div className="flex justify-center items-center bg-white rounded-xl w-10 h-10 text-primary shrink-0 shadow-sm">
+                            <FiMapPin className="w-5 h-5" />
                           </div>
-                          <div className="flex justify-center items-center bg-primary/5 rounded-2xl w-12 md:w-14 h-12 md:h-14 text-primary shrink-0">
-                            <FiMapPin className="w-6 md:w-7 h-6 md:h-7" />
+                          <div className="text-right">
+                            <p className="mb-0.5 font-black text-[10px] text-text-muted uppercase">العنوان</p>
+                            <p className="font-bold text-text-primary text-xs md:text-sm leading-relaxed" dir="rtl">
+                              {order.shippingAddress?.street && `${order.shippingAddress.street}، `}
+                              {order.shippingAddress?.city && `${order.shippingAddress.city}، `}
+                              {order.shippingAddress?.governorate}
+                            </p>
                           </div>
                         </div>
                       </div>
